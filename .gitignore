@@ -1,6 +1,6 @@
 .vscode
 test.py
 dist
-extprint.egg-info
+imagepreprocessing.egg-info
 build
 __pycache__
