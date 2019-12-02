@@ -375,7 +375,7 @@ def create_training_data_yolo(source_path, save_path = "data/obj/", percent_to_u
 
 
 
-def create_only_path_files_yolo(source_path, save_path = "data/obj/", percent_to_use = 1, validation_split = 0.2, shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt"]):
+def create_only_path_files_yolo(source_path, save_path = "data/obj/", path_seperator = "/",percent_to_use = 1, validation_split = 0.2, shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt"]):
     """
     Creates train.txt and test.txt for yolo which are includes image file paths
     (You have to label them by hand after this process)
@@ -383,6 +383,7 @@ def create_only_path_files_yolo(source_path, save_path = "data/obj/", percent_to
     # Arguments:
         source_path: source path of the images see input format
         save_path (data/obj/): this path will be added at the begining of every image name in the train.txt and test.txt files
+        path_seperator ("/"): if you vat to use other operating system for train process you can change the seperator see output format
         percent_to_use (1): percentage of data that will be used
         validation_split (0.2): splits validation data with given percentage give 0 if you don't want validation split
         shuffle (True): shuffle the paths
@@ -406,7 +407,7 @@ def create_only_path_files_yolo(source_path, save_path = "data/obj/", percent_to
         save_path = "data/obj/"
         
         /some_dir
-        train.txt
+        train.txt --> data/obj/class1/img1.jpg
         test.txt
 
     # Example:
@@ -453,7 +454,7 @@ def create_only_path_files_yolo(source_path, save_path = "data/obj/", percent_to
             # percent info
             print("File name: {} - {}/{}  Image:{}/{}".format(category, index_of_category+1, number_of_categories, image_index+1, stop_index), end="\r")
             
-            img_and_path = save_path + img
+            img_and_path = save_path + category + path_seperator + img
             image_names.append(img_and_path)
             
             # count images for dividing validation later

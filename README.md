@@ -18,7 +18,7 @@ from imagepreprocessing import create_training_data_keras, create_training_data_
 ## Create training data for keras
 
 ```python
-source_path = "datasets\\deep_learning\\food-101\\only3"
+source_path = "datasets/deep_learning/food-101/only3"
 save_path = "food10class1000sampleeach"
 create_training_data(source_path, save_path, img_size = 299, validation_split=0.1, percent_to_use=0.1, grayscale = True, files_to_exclude=["excludemoe","hi.txt"])
 ```
@@ -44,8 +44,8 @@ file saved -> C:\Users\can\Desktop\food3class100sampleeach_y_validation.pkl
 ## Make prediction with a keras model
 
 ```python
-images_path = "deep_learning\\test_images\\food2"
-model_path = "deep_learning\\saved_models\\alexnet.h5"
+images_path = "deep_learning/test_images/food2"
+model_path = "deep_learning/saved_models/alexnet.h5"
 
 make_prediction(images_path, model_path)
 ```
@@ -60,4 +60,3 @@ make_prediction(images_path, model_path)
 8.jpg : 2
 9.jpg : 1
 ```
-

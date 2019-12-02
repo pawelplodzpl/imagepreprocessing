@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="imagepreprocessing",
-    version="0.2.0",
+    version="0.2.1",
     author="Can Kurt",
     author_email="can.kurt.aa@gmail.com",
     description="image preprocessing",
@@ -18,4 +18,4 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-)
+)   
