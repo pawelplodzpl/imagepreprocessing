@@ -10,7 +10,7 @@ def __write_to_file(to_write, file_name):
         for item in to_write:
             file.write(item.__str__())
             file.write("\n")
-    
+
 
 
 def create_training_data_keras(source_path, save_path = None, img_size = 224, percent_to_use = 1, validation_split = 0, grayscale = False, one_hot = True, shuffle = True, numpy_array = True, files_to_exclude = [".DS_Store",""]):
@@ -36,7 +36,7 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
     # Save:
         Saves x train and y train optionally validation x and y 
         Save format is .pkl (pickle data)
-        If you want you can prevent saveing the file by sending None as save_path
+        If you want you can prevent saveing the file by passing None as save_path
 
     # Input format:
         source_path = some_dir
@@ -48,7 +48,7 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
         ├──/class2
             ├──img1.jpg
 
-    # output format:
+    # Output format:
         save_path = save/food_data
 
         save/food_data_x_train.pkl
@@ -208,43 +208,53 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
 
 
 
-def create_training_data_yolo(source_path, save_file_name = "obj", percent_to_use = 1, validation_split = 0.2, files_to_exclude = [".DS_Store","train.txt","test.txt"]):
+def create_training_data_yolo(source_path, save_path = "data/obj/", percent_to_use = 1, validation_split = 0.2, rename_duplicates = False, shuffle = True, files_to_exclude = [".DS_Store","data","train.txt","test.txt"]):
     """
-    Creates train ready data for yolo labels all the images by center automatically
+    Creates train ready data for yolo, labels all the images by center automatically
     (This is not the optimal way of labeling but if you need a lot of data fast this is an option)
 
     # Arguments:
         source_path: source path of the images see input format
-        save_file_name (obj): save path name to copy images and to create txt files with labels
+        save_path (data/obj/): this path will be added at the begining of every image name in the train.txt and test.txt files
         percent_to_use (1): percentage of data that will be used
         validation_split (0.2): splits validation data with given percentage give 0 if you don't want validation split
-        files_to_exclude ([".DS_Store","train.txt","test.txt"]): list of file names to exclude in the image directory (can be hidden files)
+        rename_duplicates (False): renames duplicates while copying images but it slows down the process if you don't have any duplicates in your set set it False
+        shuffle (True): shuffle the paths
+        files_to_exclude ([".DS_Store","data,"train.txt","test.txt"]): list of file names to exclude in the image directory (can be hidden files)
 
     # Save:
-        Copies all images in to save_file_name directory and creates txt files for each image see output format
+        Copies all images in to save_path directory and creates txt files for each image see output format
 
     # Input format:
+        (if there are duplicates you can use rename duplicates)
         source_path = some_dir
         
         /some_dir
         ├──/class1
             ├──img1.jpg
             ├──img2.jpg
+            ├──img3.jpg
         ├──/class2
             ├──img3.jpg
 
-    # output format:
+    # Output format:
+        (if rename duplicates is on it renames images)
         source_path = some_dir
-        save_file_name = "obj"
+        save_path = "data/obj/"
         
         /some_dir
-        ├──/obj
+        train.txt
+        test.txt
+        ├──data/obj/
             ├──img1.jpg
             ├──img1.txt
             ├──img2.jpg
             ├──img2.txt
             ├──img3.jpg
             ├──img3.txt
+            ├──img3(1).jpg
+            ├──img3(1).txt
+            
 
     # Example:
         ``python
@@ -253,9 +263,8 @@ def create_training_data_yolo(source_path, save_file_name = "obj", percent_to_us
          ``                      
     """
 
-    image_names_train = []
-    image_names_test = []
-
+    image_names = [] 
+    
     CATEGORIES = os.listdir(source_path)  # get all file names from main dir
     CATEGORIES.sort()                     # sort the directories
 
@@ -265,10 +274,10 @@ def create_training_data_yolo(source_path, save_file_name = "obj", percent_to_us
             CATEGORIES.remove(exclude)
     
     # make the dir
-    if not os.path.exists(os.path.join(source_path, save_file_name)):
-        os.makedirs(os.path.join(source_path, save_file_name))
-    else:
-        CATEGORIES.remove(save_file_name)
+    if not os.path.exists(os.path.join(source_path, save_path)):
+        os.makedirs(os.path.join(source_path, save_path))
+    
+    total_image_count = 0
 
     # loop in the main directory
     for category_index, category in enumerate(CATEGORIES):
@@ -289,7 +298,7 @@ def create_training_data_yolo(source_path, save_file_name = "obj", percent_to_us
         else:
             stop_index = int(len(images)*percent_to_use)
 
-        image_names = []       
+              
 
         # loop inside each category folder   itertools for stoping on a percentage
         for image_index, img in enumerate(itertools.islice(images , 0, stop_index)):
@@ -302,32 +311,170 @@ def create_training_data_yolo(source_path, save_file_name = "obj", percent_to_us
             # <object-class> <x_center> <y_center> <width> <height>
             # class 0.5 0.5 1 1 
 
-            yolo_labels = "{} {} {} {} {}".format(category_index, 0.5, 0.5, 1, 1)
+            yolo_labels = "{0} {1} {2} {3} {4}".format(category_index, 0.5, 0.5, 1, 1)
             
-            save_path = os.path.join(source_path, save_file_name)
+            absolute_save_path = os.path.join(source_path, save_path)
+            img_and_path = save_path + img
 
-            basename, _ = os.path.splitext(img)
+            # if rename duplicates enabled name can be changed but original name is needed to copy the file 
+            img_new_name = img
+
+            # rename duplicates if enabled
+            if(rename_duplicates):
+                duplicate_number = 1
+                while(True):
+                    if(img_and_path in image_names):
+
+                        # reset the image name tor prevet something like this img(1)(2).jpg
+                        img_and_path = save_path + img 
+
+                        # change the image name in the train or test file
+                        basename, extension = os.path.splitext(img_and_path)
+                        img_and_path = "{0}{1}{2}{3}{4}".format(basename, "(", duplicate_number, ")", extension)
+                        
+                        # change real image name
+                        basename, extension = os.path.splitext(img)
+                        img_new_name = "{0}{1}{2}{3}{4}".format(basename, "(", duplicate_number, ")", extension)
+                        duplicate_number += 1
+                    else:
+                        break
+            
+
+            basename, _ = os.path.splitext(img_new_name)
             text_name = basename + ".txt"
-            path_for_txt_file = os.path.join(save_path, text_name)
+            path_for_txt_file = os.path.join(absolute_save_path, text_name)
  
             __write_to_file([yolo_labels], path_for_txt_file)
 
+
             # copy_files_to_new_path
-            new_path_img = os.path.join(save_path, img)            
+            new_path_img = os.path.join(absolute_save_path, img_new_name)            
             copyfile(os.path.join(path, img), new_path_img)
 
-            image_names.append("data/obj/" + img)
+            image_names.append(img_and_path)
+
+            # count images for dividing validation later
+            total_image_count += 1
         
         print("")
 
-        train_percent = int(len(images) - (validation_split * len(images)))
-        
-        image_names_train += image_names[:train_percent]
-        image_names_test += image_names[train_percent:]
+    # shuffle and divide train and test sets
+    if(shuffle):
+        random.shuffle(image_names)
+    image_names_train = []
+    image_names_test = []
 
+    train_percent = int((validation_split * total_image_count))
+    image_names_train += image_names[train_percent:]
+    image_names_test += image_names[:train_percent]
 
+    # save to file
     __write_to_file(image_names_train, file_name = os.path.join(source_path, "train.txt"))
     __write_to_file(image_names_test, file_name = os.path.join(source_path, "test.txt"))
+    print("\nfile saved -> {0}\nfile saved -> {1}".format("train.txt", "test.txt"))
+
+
+
+def create_only_path_files_yolo(source_path, save_path = "data/obj/", percent_to_use = 1, validation_split = 0.2, shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt"]):
+    """
+    Creates train.txt and test.txt for yolo which are includes image file paths
+    (You have to label them by hand after this process)
+
+    # Arguments:
+        source_path: source path of the images see input format
+        save_path (data/obj/): this path will be added at the begining of every image name in the train.txt and test.txt files
+        percent_to_use (1): percentage of data that will be used
+        validation_split (0.2): splits validation data with given percentage give 0 if you don't want validation split
+        shuffle (True): shuffle the paths
+        files_to_exclude ([".DS_Store","train.txt","test.txt"]): list of file names to exclude in the image directory (can be hidden files)
+
+    # Save:
+        Creates train.txt and test.txt files
+
+    # Input format:
+        source_path = some_dir
+        
+        /some_dir
+        ├──/class1
+            ├──img1.jpg
+            ├──img2.jpg
+        ├──/class2
+            ├──img3.jpg
+
+    # Output format:
+        source_path = some_dir
+        save_path = "data/obj/"
+        
+        /some_dir
+        train.txt
+        test.txt
+
+    # Example:
+        ``python
+            source_path = "food-101\\images"
+            create_only_path_files_yolo(source_path)       
+         ``                      
+    """
+
+    image_names = [] 
+    
+    CATEGORIES = os.listdir(source_path)  # get all file names from main dir
+    CATEGORIES.sort()                     # sort the directories
+
+    # remove excluded files
+    for exclude in files_to_exclude:
+        if exclude in CATEGORIES: 
+            CATEGORIES.remove(exclude)
+    
+    total_image_count = 0
+
+    # loop in the main directory
+    for category_index, category in enumerate(CATEGORIES):
+
+        path = os.path.join(source_path, category)
+        number_of_categories = len(CATEGORIES)
+        index_of_category = CATEGORIES.index(category)
+        images = os.listdir(path)
+
+        # fix possible percentage error
+        if(percent_to_use <= 0 or percent_to_use > 1):
+            print("Enter a possible percentage between 0 and 1")
+            return
+        elif(int(percent_to_use * len(images)) == 0):
+            print("Percentage is too small for this set")
+            return
+        else:
+            stop_index = int(len(images)*percent_to_use)
+
+
+        # loop inside each category folder   itertools for stoping on a percentage
+        for image_index, img in enumerate(itertools.islice(images , 0, stop_index)):
+
+            # percent info
+            print("File name: {} - {}/{}  Image:{}/{}".format(category, index_of_category+1, number_of_categories, image_index+1, stop_index), end="\r")
+            
+            img_and_path = save_path + img
+            image_names.append(img_and_path)
+            
+            # count images for dividing validation later
+            total_image_count += 1
+        
+        print("")
+
+
+    # shuffle and divide train and test sets
+    if(shuffle):
+        random.shuffle(image_names)
+    image_names_train = []
+    image_names_test = []
+    train_percent = int((validation_split * total_image_count))
+    image_names_train += image_names[train_percent:]
+    image_names_test += image_names[:train_percent]
+
+    # save to file
+    __write_to_file(image_names_train, file_name = os.path.join(source_path, "train.txt"))
+    __write_to_file(image_names_test, file_name = os.path.join(source_path, "test.txt"))
+    print("\nfile saved -> {0}\nfile saved -> {1}".format("train.txt", "test.txt"))
 
 
 

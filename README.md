@@ -1,6 +1,6 @@
 ## imagepreprocessing
 
-- **Creates train ready data in a single line**
+- **Creates train ready data for keras or yolo in a single line**
 - **Makes prediction with using keras model in a single line**
 
 ## Install
@@ -12,7 +12,7 @@ pip install imagepreprocessing
 ## Usage
 
 ```python
-from imagepreprocessing import create_training_data_keras, create_training_data_yolo, make_prediction
+from imagepreprocessing import create_training_data_keras, create_training_data_yolo, create_only_path_files_yolo, make_prediction
 ```
 
 ## Create training data for keras
