@@ -64,7 +64,6 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
         ``                      
     """
 
-    import matplotlib.pyplot as plt
     import numpy as np
     import cv2
 
@@ -383,7 +382,7 @@ def create_only_path_files_yolo(source_path, save_path = "data/obj/", path_seper
     # Arguments:
         source_path: source path of the images see input format
         save_path (data/obj/): this path will be added at the begining of every image name in the train.txt and test.txt files
-        path_seperator ("/"): if you vat to use other operating system for train process you can change the seperator see output format
+        path_seperator ("/"): if you want to use other operating system for train process you can change the seperator see output format
         percent_to_use (1): percentage of data that will be used
         validation_split (0.2): splits validation data with given percentage give 0 if you don't want validation split
         shuffle (True): shuffle the paths
@@ -430,7 +429,7 @@ def create_only_path_files_yolo(source_path, save_path = "data/obj/", path_seper
     total_image_count = 0
 
     # loop in the main directory
-    for category_index, category in enumerate(CATEGORIES):
+    for _, category in enumerate(CATEGORIES):
 
         path = os.path.join(source_path, category)
         number_of_categories = len(CATEGORIES)
@@ -555,10 +554,11 @@ def make_prediction(images_path, keras_model_path, image_size = 224, model_summa
         model.summary()
 
     predictions = []
+
     for image, name in zip(test_images,test_image_names):
         prediction = model.predict(image)
         prediction_class = np.argmax(prediction)
-        predictions.append("{0} : {1}".format(name,prediction_class))
+        predictions.append(prediction_class)
         print("{0} : {1}".format(name,prediction_class))
 
         if(show_images):
@@ -570,6 +570,57 @@ def make_prediction(images_path, keras_model_path, image_size = 224, model_summa
 
     return predictions
 
+
+
+def create_confusion_matrix(predictions, actual_values, class_names=None, normalize=False):
+    """ 
+    Creates a confusion matrix
+
+    # Arguments:
+        predictions: predicted numerical class labels of each sample ex:[1,2,5,3,1]
+        actual_values: actual numerical class labels of each sample ex:[1,2,5,3,1]
+        class_names (None): names of classes that will be drawn, if you want only the array and not the plot pass None (matplotlib required)
+        normalize (False): normalizes the values of the matrix
+
+    # Retruns:
+        A numpy array of confusion matrix 
+    """
+    from sklearn.metrics import confusion_matrix
+    import numpy as np
+
+    cnf_matrix = confusion_matrix(predictions, actual_values)
+
+    if(normalize):
+        cnf_matrix = cnf_matrix.astype('float') / cnf_matrix.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cnf_matrix)
+
+    if(class_names):
+        import matplotlib.pyplot as plt
+
+        title='Confusion matrix'
+        cmap=plt.cm.Blues
+
+        plt.imshow(cnf_matrix, interpolation='nearest', cmap=cmap)
+        plt.title(title)
+        plt.colorbar()
+        tick_marks = np.arange(len(class_names))
+        plt.xticks(tick_marks, class_names, rotation=45)
+        plt.yticks(tick_marks, class_names)
+
+        
+        thresh = cnf_matrix.max() / 2.
+        for i, j in itertools.product(range(cnf_matrix.shape[0]), range(cnf_matrix.shape[1])):
+            plt.text(j, i, cnf_matrix[i, j],horizontalalignment="center",color="white" if cnf_matrix[i, j] > thresh else "black")
+        plt.tight_layout()
+        plt.ylabel('True label')
+        plt.xlabel('Predicted label')
+        plt.show()
+
+    return cnf_matrix
 
 
 

@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="imagepreprocessing",
-    version="0.2.1",
+    version="0.3.0",
     author="Can Kurt",
     author_email="can.kurt.aa@gmail.com",
     description="image preprocessing",

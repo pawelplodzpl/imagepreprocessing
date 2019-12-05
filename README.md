@@ -1,7 +1,9 @@
 ## imagepreprocessing
 
 - **Creates train ready data for keras or yolo in a single line**
-- **Makes prediction with using keras model in a single line**
+- **Makes prediction with using keras model**
+- **Plots confusion matrix**
+
 
 ## Install
 
@@ -12,7 +14,7 @@ pip install imagepreprocessing
 ## Usage
 
 ```python
-from imagepreprocessing import create_training_data_keras, create_training_data_yolo, create_only_path_files_yolo, make_prediction
+from imagepreprocessing import create_training_data_keras, create_training_data_yolo, create_only_path_files_yolo, make_prediction, create_confusion_matrix
 ```
 
 ## Create training data for keras
@@ -41,13 +43,17 @@ file saved -> C:\Users\can\Desktop\food3class100sampleeach_x_validation.pkl
 file saved -> C:\Users\can\Desktop\food3class100sampleeach_y_validation.pkl
 ```
 
-## Make prediction with a keras model
+## Make prediction with a keras model and plot confusion matrix
 
 ```python
 images_path = "deep_learning/test_images/food2"
 model_path = "deep_learning/saved_models/alexnet.h5"
 
-make_prediction(images_path, model_path)
+predictions = make_prediction(images_path, model_path)
+
+class_names = ["apple", "melon", "orange"]
+labels = [0,0,0,1,1,1,2,2,2]
+create_confusion_matrix(predictions, labels, class_names=class_names)
 ```
 ```
 1.jpg : 0
@@ -59,4 +65,11 @@ make_prediction(images_path, model_path)
 7.jpg : 2
 8.jpg : 2
 9.jpg : 1
+Confusion matrix, without normalization
+[[3 0 0]
+ [0 2 1]
+ [0 1 2]]
 ```
+
+
+
