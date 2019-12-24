@@ -1,7 +1,7 @@
 ## imagepreprocessing
 
 - **Creates train ready data for keras or yolo in a single line**
-- **Makes prediction with using keras model**
+- **Makes prediction process easier with using keras model from both array and directory**
 - **Plots confusion matrix**
 
 
@@ -43,13 +43,13 @@ file saved -> C:\Users\can\Desktop\food3class100sampleeach_x_validation.pkl
 file saved -> C:\Users\can\Desktop\food3class100sampleeach_y_validation.pkl
 ```
 
-## Make prediction with a keras model and plot confusion matrix
+## Make prediction from directory with a keras model and plot confusion matrix
 
 ```python
 images_path = "deep_learning/test_images/food2"
 model_path = "deep_learning/saved_models/alexnet.h5"
 
-predictions = make_prediction(images_path, model_path)
+predictions = make_prediction_from_directory(images_path, model_path)
 
 class_names = ["apple", "melon", "orange"]
 labels = [0,0,0,1,1,1,2,2,2]
@@ -71,5 +71,25 @@ Confusion matrix, without normalization
  [0 1 2]]
 ```
 
+## Create training data split the data and make prediction from test_x with a keras model finally create the confusion matrix
+
+```python
+images_path = "deep_learning/test_images/food2"
+save_path = "food"
+model_path = "deep_learning/saved_models/alexnet.h5"
 
 
+x, y, x_val, y_val = create_training_data_keras(images_path, save_path = save_path, validation_split=0.2, percent_to_use=0.5)
+
+x, y, test_x, test_y =  train_test_split(x,y,save_path = save_path)
+
+# ...
+# training
+# ...
+
+class_names = ["apple", "melon", "orange"]
+
+predictions = make_prediction_from_array(test_x, model_path, print_output=False)
+
+create_confusion_matrix(predictions, test_y, class_names=class_names, one_hot=True)
+```

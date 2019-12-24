@@ -32,6 +32,8 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
 
     # Returns:
         List or numpy array of train data optionally validation data
+        if validation_split is 0 -> x, y
+        if validation_split is not 0 -> x, y, x_val, y_val
 
     # Save:
         Saves x train and y train optionally validation x and y 
@@ -180,7 +182,7 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
         if(validation_split != 0):
             x_val = np.array(x_val).reshape(-1, img_size, img_size, third_dimension)
             y_val = np.array(y_val)    
-            print("shape of validate x: {0}\nshape of validate y: {1}".format(x_val.shape,y_val.shape))
+            print("shape of validation x: {0}\nshape of validation y: {1}".format(x_val.shape,y_val.shape))
     
 
     # save
@@ -194,16 +196,18 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
             print("file saved -> {0}{1}".format(save_path,"_y_train.pkl"))
         
         if(validation_split != 0):
-            with open(save_path + "_x_validate.pkl", "wb") as file:
+            with open(save_path + "_x_validation.pkl", "wb") as file:
                 pickle.dump(x_val, file, protocol=pickle.HIGHEST_PROTOCOL)
                 print("file saved -> {0}{1}".format(save_path,"_x_validation.pkl"))
 
-            with open(save_path + "_y_validate.pkl", "wb") as file:
+            with open(save_path + "_y_validation.pkl", "wb") as file:
                 pickle.dump(y_val, file, protocol=pickle.HIGHEST_PROTOCOL)
                 print("file saved -> {0}{1}\n".format(save_path,"_y_validation.pkl"))
         
-
-    return x, y, x_val, y_val
+    if(validation_split):
+        return x, y, x_val, y_val
+    else:
+        return x, y
 
 
 def create_training_data_yolo(source_path, save_path = "data/obj/", percent_to_use = 1, validation_split = 0.2, rename_duplicates = False, shuffle = True, files_to_exclude = [".DS_Store","data","train.txt","test.txt"]):
@@ -216,7 +220,7 @@ def create_training_data_yolo(source_path, save_path = "data/obj/", percent_to_u
         save_path (data/obj/): this path will be added at the begining of every image name in the train.txt and test.txt files
         percent_to_use (1): percentage of data that will be used
         validation_split (0.2): splits validation data with given percentage give 0 if you don't want validation split
-        rename_duplicates (False): renames duplicates while copying images but it slows down the process if you don't have any duplicates in your set set it False
+        rename_duplicates (False): renames duplicates while copying images but it slows down the process if you don't have any duplicates in your set don't use it
         shuffle (True): shuffle the paths
         files_to_exclude ([".DS_Store","data,"train.txt","test.txt"]): list of file names to exclude in the image directory (can be hidden files)
 
@@ -462,7 +466,7 @@ def create_only_path_files_yolo(source_path, save_path = "data/obj/", path_seper
     print("\nfile saved -> {0}\nfile saved -> {1}".format("train.txt", "test.txt"))
 
 
-def make_prediction_from_directory(images_path, keras_model_path, image_size = 224, model_summary=True, show_images=False, grayscale = False, files_to_exclude = [".DS_Store",""]):
+def make_prediction_from_directory(images_path, keras_model_path, image_size = 224, print_output=True, model_summary=True, show_images=False, grayscale = False, files_to_exclude = [".DS_Store",""]):
     """
     Reads test data from directory resizes it and makes prediction with using a keras model
 
@@ -470,6 +474,7 @@ def make_prediction_from_directory(images_path, keras_model_path, image_size = 2
         images_path: source path of the test images see input format
         keras_model_path: path of the keras model 
         img_size (224): size of the images for resizing
+        print_output (True): prints output
         model_summary (True): shows keras model summary 
         show_images (False): shows the predicted image
         grayscale (False): converts images to grayscale
@@ -536,7 +541,8 @@ def make_prediction_from_directory(images_path, keras_model_path, image_size = 2
         prediction = model.predict(image)
         prediction_class = np.argmax(prediction)
         predictions.append(prediction_class)
-        print("{0} : {1}".format(name,prediction_class))
+        if(print_output):
+            print("{0} : {1}".format(name,prediction_class))
 
         if(show_images):
             abs_path = os.path.join(images_path, name)
@@ -548,13 +554,14 @@ def make_prediction_from_directory(images_path, keras_model_path, image_size = 2
     return predictions
 
 
-def make_prediction_from_array(image_array, keras_model_path, model_summary=True, show_images=False):
+def make_prediction_from_array(test_x, keras_model_path, print_output=True, model_summary=True, show_images=False):
     """
     makes prediction with using a keras model
 
     # Arguments:
-        image_array: numpy array of images
-        keras_model_path: path of the keras model 
+        test_x: numpy array of images
+        keras_model_path: path of the keras model
+        print_output (True): prints output
         model_summary (True): shows keras model summary 
         show_images (False): shows the predicted image
         grayscale (False): converts images to grayscale
@@ -581,14 +588,15 @@ def make_prediction_from_array(image_array, keras_model_path, model_summary=True
 
     predictions = []
 
-    for index, image in enumerate(image_array):
+    for index, image in enumerate(test_x):
 
-        # add an axtra dimension to array since we are iterating over the array the first dimension is disapeares
+        # add an extra dimension to array since we are iterating over the array the first dimension is disapeares
         new_image = np.expand_dims(image, axis=0)
         prediction = model.predict(new_image)
         prediction_class = np.argmax(prediction)
         predictions.append(prediction_class)
-        print("{0} : {1}".format(index, prediction_class))
+        if(print_output):
+            print("{0} : {1}".format(index, prediction_class))
 
         if(show_images):
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -598,7 +606,7 @@ def make_prediction_from_array(image_array, keras_model_path, model_summary=True
     return predictions
 
 
-def train_test_split(train_x, train_y, test_size=0.2):
+def train_test_split(train_x, train_y, test_size=0.2, save_path=None):
     """
     Splits train and test sets from numpy array
 
@@ -606,6 +614,7 @@ def train_test_split(train_x, train_y, test_size=0.2):
         train_x: taining data
         train_y: labels of the training data
         test_size (0.2): size of the test set to split
+        save_path (None): save path for for seperated data
 
     # Returns 
         splitted train and test data
@@ -631,6 +640,27 @@ def train_test_split(train_x, train_y, test_size=0.2):
     test_x = train_x[:train_percent]
     test_y = train_y[:train_percent]
 
+    print("\ntest x: {0} test y: {1}".format(len(test_x),len(test_x)))
+    print("train x: {0} train y: {1}".format(len(new_train_x),len(new_train_y)))
+
+    # save
+    if(save_path != None):
+        with open(save_path + "_x_train.pkl", "wb") as file:
+            pickle.dump(new_train_x, file, protocol=pickle.HIGHEST_PROTOCOL)
+            print("\nfile saved -> {0}{1}".format(save_path,"_x_train.pkl"))
+
+        with open(save_path + "_y_train.pkl", "wb") as file:
+            pickle.dump(new_train_y, file, protocol=pickle.HIGHEST_PROTOCOL)
+            print("file saved -> {0}{1}".format(save_path,"_y_train.pkl"))
+        
+        with open(save_path + "_x_test.pkl", "wb") as file:
+            pickle.dump(test_x, file, protocol=pickle.HIGHEST_PROTOCOL)
+            print("file saved -> {0}{1}".format(save_path,"_x_test.pkl"))
+
+        with open(save_path + "_y_test.pkl", "wb") as file:
+            pickle.dump(test_y, file, protocol=pickle.HIGHEST_PROTOCOL)
+            print("file saved -> {0}{1}\n".format(save_path,"_y_test.pkl"))
+        
     return new_train_x, new_train_y, test_x, test_y
 
 
@@ -642,7 +672,7 @@ def create_confusion_matrix(predictions, actual_values, class_names=None, one_ho
         predictions: list of predicted numerical class labels of each sample ex:[1,2,5,3,1]
         actual_values: list of actual numerical class labels of each sample ex:[1,2,5,3,1] or onehot encoded [[0,0,1],[1,0,0],[0,1,0]]
         class_names (None): names of classes that will be drawn, if you want only the array and not the plot pass None (matplotlib required)
-        one_hot (False): if labels are one hot formatted make this true
+        one_hot (False): if labels are one hot formatted use this
         normalize (False): normalizes the values of the matrix
 
     # Retruns:
@@ -661,7 +691,7 @@ def create_confusion_matrix(predictions, actual_values, class_names=None, one_ho
         actual_values = labels
 
     # create confusion matrix
-    cnf_matrix = confusion_matrix(predictions, actual_values)
+    cnf_matrix = confusion_matrix(actual_values, predictions)
 
     if(normalize):
         cnf_matrix = cnf_matrix.astype('float') / cnf_matrix.sum(axis=1)[:, np.newaxis]
