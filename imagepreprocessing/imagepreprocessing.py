@@ -380,18 +380,17 @@ def create_training_data_yolo(source_path, save_path = "data/obj/", percent_to_u
 
     print("\nfile saved -> {0}\nfile saved -> {1}\nfile saved -> {2}\nfile saved -> {3}".format("train.txt", "test.txt","obj.names","obj.data"))
 
-
-def create_only_path_files_yolo(source_path, save_path = "data/obj/", path_seperator = "/",percent_to_use = 1, validation_split = 0.2, shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data"]):
+# bunun adini degistir kafam karisiyo lan
+def create_only_path_files_yolo(source_path, save_path = "data/obj/", percent_to_use = 1, validation_split = 0.2, auto_label_by_center = False, shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data"]):
     """
     Creates train.txt and test.txt for yolo which are includes image file paths
-    (You have to label them by hand after this process)
 
     # Arguments:
         source_path: source path of the images see input format
         save_path (data/obj/): this path will be added at the begining of every image name in the train.txt and test.txt files
-        path_seperator ("/"): if you want to use other operating system for train process you can change the seperator see output format
         percent_to_use (1): percentage of data that will be used
         validation_split (0.2): splits validation data with given percentage give 0 if you don't want validation split
+        auto_label_by_center (False): creates label txt files for all images labels images by their center automatically (use it if all of your datasets images are centered)
         shuffle (True): shuffle the paths
         files_to_exclude ([".DS_Store","train.txt","test.txt","obj.names","obj.data"]): list of file names to exclude in the image directory (can be hidden files)
 
@@ -430,7 +429,7 @@ def create_only_path_files_yolo(source_path, save_path = "data/obj/", path_seper
     total_image_count = 0
 
     # loop in the main directory
-    for _, category in enumerate(CATEGORIES):
+    for category_index, category in enumerate(CATEGORIES):
 
         path = os.path.join(source_path, category)
         number_of_categories = len(CATEGORIES)
@@ -453,8 +452,20 @@ def create_only_path_files_yolo(source_path, save_path = "data/obj/", path_seper
 
             # percent info
             print("File name: {} - {}/{}  Image:{}/{}".format(category, index_of_category+1, number_of_categories, image_index+1, stop_index), end="\r")
-            
-            img_and_path = save_path + category + path_seperator + img
+
+
+            # if auto_label_by_center is True create label files and label images by the image center
+            if(auto_label_by_center):
+                yolo_labels = "{0} {1} {2} {3} {4}".format(category_index, 0.5, 0.5, 1, 1)
+                
+                basename, extension = os.path.splitext(img)
+                txtname = basename + ".txt"
+                abs_save_path = os.path.join(path, txtname)
+        
+                __write_to_file([yolo_labels], file_name = abs_save_path)
+
+            # using save_path's last character (data/obj/ or data\\obj\\) to separete inner paths so if operating system is different inner paths will be matches 
+            img_and_path = save_path + category + save_path[-1] + img
             image_names.append(img_and_path)
             
             # count images for dividing validation later
