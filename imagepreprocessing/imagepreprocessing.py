@@ -210,7 +210,7 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
         return x, y
 
 
-def create_training_data_yolo(source_path, save_path = "data/obj/", percent_to_use = 1, validation_split = 0.2, rename_duplicates = False, shuffle = True, files_to_exclude = [".DS_Store","data","train.txt","test.txt"]):
+def create_training_data_yolo(source_path, save_path = "data/obj/", percent_to_use = 1, validation_split = 0.2, rename_duplicates = False, shuffle = True, files_to_exclude = [".DS_Store","data","train.txt","test.txt","obj.names","obj.data"]):
     """
     Creates train ready data for yolo, labels all the images by center automatically
     (This is not the optimal way of labeling but if you need a lot of data fast this is an option)
@@ -222,7 +222,7 @@ def create_training_data_yolo(source_path, save_path = "data/obj/", percent_to_u
         validation_split (0.2): splits validation data with given percentage give 0 if you don't want validation split
         rename_duplicates (False): renames duplicates while copying images but it slows down the process if you don't have any duplicates in your set don't use it
         shuffle (True): shuffle the paths
-        files_to_exclude ([".DS_Store","data,"train.txt","test.txt"]): list of file names to exclude in the image directory (can be hidden files)
+        files_to_exclude ([".DS_Store","data,"train.txt","test.txt","obj.names","obj.data"]): list of file names to exclude in the image directory (can be hidden files)
 
     # Save:
         Copies all images in to save_path directory and creates txt files for each image see output format
@@ -363,13 +363,25 @@ def create_training_data_yolo(source_path, save_path = "data/obj/", percent_to_u
     image_names_train += image_names[train_percent:]
     image_names_test += image_names[:train_percent]
 
+    # prepare obj.data
+    objdata = []
+    objdata.append("classes = {0}".format(len(CATEGORIES)))
+    objdata.append("train  = data/train.txt")
+    objdata.append("valid  = data/test.txt")
+    objdata.append("names = data/obj.names")
+    objdata.append("backup = backup")
+
     # save to file
     __write_to_file(image_names_train, file_name = os.path.join(source_path, "train.txt"))
     __write_to_file(image_names_test, file_name = os.path.join(source_path, "test.txt"))
-    print("\nfile saved -> {0}\nfile saved -> {1}".format("train.txt", "test.txt"))
+
+    __write_to_file(CATEGORIES, file_name = os.path.join(source_path, "obj.names"))
+    __write_to_file(objdata, file_name = os.path.join(source_path, "obj.data"))
+
+    print("\nfile saved -> {0}\nfile saved -> {1}\nfile saved -> {2}\nfile saved -> {3}".format("train.txt", "test.txt","obj.names","obj.data"))
 
 
-def create_only_path_files_yolo(source_path, save_path = "data/obj/", path_seperator = "/",percent_to_use = 1, validation_split = 0.2, shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt"]):
+def create_only_path_files_yolo(source_path, save_path = "data/obj/", path_seperator = "/",percent_to_use = 1, validation_split = 0.2, shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data"]):
     """
     Creates train.txt and test.txt for yolo which are includes image file paths
     (You have to label them by hand after this process)
@@ -381,7 +393,7 @@ def create_only_path_files_yolo(source_path, save_path = "data/obj/", path_seper
         percent_to_use (1): percentage of data that will be used
         validation_split (0.2): splits validation data with given percentage give 0 if you don't want validation split
         shuffle (True): shuffle the paths
-        files_to_exclude ([".DS_Store","train.txt","test.txt"]): list of file names to exclude in the image directory (can be hidden files)
+        files_to_exclude ([".DS_Store","train.txt","test.txt","obj.names","obj.data"]): list of file names to exclude in the image directory (can be hidden files)
 
     # Save:
         Creates train.txt and test.txt files
@@ -460,10 +472,22 @@ def create_only_path_files_yolo(source_path, save_path = "data/obj/", path_seper
     image_names_train += image_names[train_percent:]
     image_names_test += image_names[:train_percent]
 
+    # prepare obj.data
+    objdata = []
+    objdata.append("classes = {0}".format(len(CATEGORIES)))
+    objdata.append("train  = data/train.txt")
+    objdata.append("valid  = data/test.txt")
+    objdata.append("names = data/obj.names")
+    objdata.append("backup = backup")
+
     # save to file
     __write_to_file(image_names_train, file_name = os.path.join(source_path, "train.txt"))
     __write_to_file(image_names_test, file_name = os.path.join(source_path, "test.txt"))
-    print("\nfile saved -> {0}\nfile saved -> {1}".format("train.txt", "test.txt"))
+
+    __write_to_file(CATEGORIES, file_name = os.path.join(source_path, "obj.names"))
+    __write_to_file(objdata, file_name = os.path.join(source_path, "obj.data"))
+
+    print("\nfile saved -> {0}\nfile saved -> {1}\nfile saved -> {2}\nfile saved -> {3}".format("train.txt", "test.txt","obj.names","obj.data"))
 
 
 def make_prediction_from_directory(images_path, keras_model_path, image_size = 224, print_output=True, model_summary=True, show_images=False, grayscale = False, files_to_exclude = [".DS_Store",""]):
