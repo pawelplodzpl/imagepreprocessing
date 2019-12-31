@@ -210,7 +210,7 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
         return x, y
 
 
-def create_training_data_yolo(source_path, save_path = "data/obj/", percent_to_use = 1, validation_split = 0.2, rename_duplicates = False, shuffle = True, files_to_exclude = [".DS_Store","data","train.txt","test.txt","obj.names","obj.data"]):
+def __create_training_data_yolo(source_path, save_path = "data/obj/", percent_to_use = 1, validation_split = 0.2, rename_duplicates = False, shuffle = True, files_to_exclude = [".DS_Store","data","train.txt","test.txt","obj.names","obj.data"]):
     """
     Creates train ready data for yolo, labels all the images by center automatically
     (This is not the optimal way of labeling but if you need a lot of data fast this is an option)
@@ -380,17 +380,17 @@ def create_training_data_yolo(source_path, save_path = "data/obj/", percent_to_u
 
     print("\nfile saved -> {0}\nfile saved -> {1}\nfile saved -> {2}\nfile saved -> {3}".format("train.txt", "test.txt","obj.names","obj.data"))
 
-# bunun adini degistir kafam karisiyo lan
-def create_only_path_files_yolo(source_path, save_path = "data/obj/", percent_to_use = 1, validation_split = 0.2, auto_label_by_center = False, shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data"]):
+# bunun adini degistirdim karıistirma
+def create_training_data_yolo(source_path, percent_to_use = 1, validation_split = 0.2, auto_label_by_center = False, train_machine_path_sep = "/", shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data"]):
     """
-    Creates train.txt and test.txt for yolo which are includes image file paths
+    Creates required training files for yolo 
 
     # Arguments:
         source_path: source path of the images see input format
-        save_path (data/obj/): this path will be added at the begining of every image name in the train.txt and test.txt files
         percent_to_use (1): percentage of data that will be used
         validation_split (0.2): splits validation data with given percentage give 0 if you don't want validation split
         auto_label_by_center (False): creates label txt files for all images labels images by their center automatically (use it if all of your datasets images are centered)
+        train_machine_path_sep ("/"): if you are going to use a windows machine for training change this  
         shuffle (True): shuffle the paths
         files_to_exclude ([".DS_Store","train.txt","test.txt","obj.names","obj.data"]): list of file names to exclude in the image directory (can be hidden files)
 
@@ -408,26 +408,37 @@ def create_only_path_files_yolo(source_path, save_path = "data/obj/", percent_to
             ├──img3.jpg
 
     # Output format:
-        source_path = some_dir
-        save_path = "data/obj/"
-        
         /some_dir
         train.txt --> data/obj/class1/img1.jpg
-        test.txt                   
+        test.txt   
+        obj.data
+        obj.names                
     """
 
-    image_names = [] 
-    
-    CATEGORIES = os.listdir(source_path)  # get all file names from main dir
-    CATEGORIES.sort()                     # sort the directories
+
+    # get all file names from main dir and sort the directories
+    CATEGORIES = os.listdir(source_path)  
+    CATEGORIES.sort()           
 
     # remove excluded files
     for exclude in files_to_exclude:
         if exclude in CATEGORIES: 
             CATEGORIES.remove(exclude)
     
-    total_image_count = 0
+    # change path seperator if needed
+    save_path = "data/obj/".replace("/",train_machine_path_sep)
 
+    # prepare obj.data
+    objdata = []
+    objdata.append("classes = {0}".format(len(CATEGORIES)))
+    objdata.append("train  = data/train.txt".replace("/",train_machine_path_sep))
+    objdata.append("valid  = data/test.txt".replace("/",train_machine_path_sep))
+    objdata.append("names = data/obj.names".replace("/",train_machine_path_sep))
+    objdata.append("backup = backup")
+
+
+    total_image_count = 0
+    image_names = []
     # loop in the main directory
     for category_index, category in enumerate(CATEGORIES):
 
@@ -483,15 +494,8 @@ def create_only_path_files_yolo(source_path, save_path = "data/obj/", percent_to
     image_names_train += image_names[train_percent:]
     image_names_test += image_names[:train_percent]
 
-    # prepare obj.data
-    objdata = []
-    objdata.append("classes = {0}".format(len(CATEGORIES)))
-    objdata.append("train  = data/train.txt")
-    objdata.append("valid  = data/test.txt")
-    objdata.append("names = data/obj.names")
-    objdata.append("backup = backup")
 
-    # save to file
+    # create files
     __write_to_file(image_names_train, file_name = os.path.join(source_path, "train.txt"))
     __write_to_file(image_names_test, file_name = os.path.join(source_path, "test.txt"))
 
