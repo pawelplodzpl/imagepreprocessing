@@ -14,7 +14,7 @@ pip install imagepreprocessing
 ## Usage
 
 ```python
-from imagepreprocessing import create_training_data_keras, create_training_data_yolo, make_prediction_from_directory, create_confusion_matrix
+from imagepreprocessing import create_training_data_keras, create_training_data_yolo, make_prediction_from_directory_keras, create_confusion_matrix
 ```
 
 ## Create training data for keras
@@ -22,7 +22,7 @@ from imagepreprocessing import create_training_data_keras, create_training_data_
 ```python
 source_path = "datasets/deep_learning/food-101/only3"
 save_path = "food10class1000sampleeach"
-create_training_data(source_path, save_path, img_size = 299, validation_split=0.1, percent_to_use=0.1, grayscale = True, files_to_exclude=["excludemoe","hi.txt"])
+create_training_data_keras(source_path, save_path, img_size = 299, validation_split=0.1, percent_to_use=0.1, grayscale = True, files_to_exclude=["excludemoe","hi.txt"])
 ```
 ```
 File name: apple_pie - 1/3  Image:100/100
@@ -49,7 +49,7 @@ file saved -> C:\Users\can\Desktop\food3class100sampleeach_y_validation.pkl
 images_path = "deep_learning/test_images/food2"
 model_path = "deep_learning/saved_models/alexnet.h5"
 
-predictions = make_prediction_from_directory(images_path, model_path)
+predictions = make_prediction_from_directory_keras(images_path, model_path)
 
 class_names = ["apple", "melon", "orange"]
 labels = [0,0,0,1,1,1,2,2,2]
@@ -89,7 +89,7 @@ x, y, test_x, test_y =  train_test_split(x,y,save_path = save_path)
 
 class_names = ["apple", "melon", "orange"]
 
-predictions = make_prediction_from_array(test_x, model_path, print_output=False)
+predictions = make_prediction_from_array_keras(test_x, model_path, print_output=False)
 
 create_confusion_matrix(predictions, test_y, class_names=class_names, one_hot=True)
 ```
