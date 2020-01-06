@@ -5,11 +5,24 @@ import itertools
 from shutil import copyfile
 
 
+# private functions
+
+def __read_from_file(file_name):
+    try:
+        with open(file_name,'r', encoding='utf-8') as file:
+            content = file.read()
+            return content
+    except (OSError, IOError) as e:
+        print(e)
+    
 def __write_to_file(to_write, file_name):
-    with open(file_name,'w', encoding='utf-8') as file:
-        for item in to_write:
-            file.write(item.__str__())
-            file.write("\n")
+    try:
+        with open(file_name,'w', encoding='utf-8') as file:
+            for item in to_write:
+                file.write(item.__str__())
+                file.write("\n")
+    except (OSError, IOError) as e:
+        print(e)
 
 def __run_shell_command(command):
     import subprocess
@@ -17,6 +30,8 @@ def __run_shell_command(command):
     return output
 
 
+
+# keras functions
 
 def create_training_data_keras(source_path, save_path = None, img_size = 224, percent_to_use = 1, validation_split = 0, grayscale = False, one_hot = True, shuffle = True, numpy_array = True, files_to_exclude = [".DS_Store",""]):
     """
@@ -214,130 +229,6 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
     else:
         return x, y
 
-# bunun adini degistirdim karıistirma
-def create_training_data_yolo(source_path, percent_to_use = 1, validation_split = 0.2, auto_label_by_center = False, train_machine_path_sep = "/", shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data"]):
-    """
-    Creates required training files for yolo 
-
-    # Arguments:
-        source_path: source path of the images see input format
-        percent_to_use (1): percentage of data that will be used
-        validation_split (0.2): splits validation data with given percentage give 0 if you don't want validation split
-        auto_label_by_center (False): creates label txt files for all images labels images by their center automatically (use it if all of your datasets images are centered)
-        train_machine_path_sep ("/"): if you are going to use a windows machine for training change this  
-        shuffle (True): shuffle the paths
-        files_to_exclude ([".DS_Store","train.txt","test.txt","obj.names","obj.data"]): list of file names to exclude in the image directory (can be hidden files)
-
-    # Save:
-        Creates train.txt and test.txt files
-
-    # Input format:
-        source_path = some_dir
-        
-        /some_dir
-        ├──/class1
-            ├──img1.jpg
-            ├──img2.jpg
-        ├──/class2
-            ├──img3.jpg
-
-    # Output format:
-        /some_dir
-        train.txt --> data/obj/class1/img1.jpg
-        test.txt   
-        obj.data
-        obj.names                
-    """
-
-
-    # get all file names from main dir and sort the directories
-    CATEGORIES = os.listdir(source_path)  
-    CATEGORIES.sort()           
-
-    # remove excluded files
-    for exclude in files_to_exclude:
-        if exclude in CATEGORIES: 
-            CATEGORIES.remove(exclude)
-    
-    # change path seperator if needed
-    save_path = "data/obj/".replace("/",train_machine_path_sep)
-
-    # prepare obj.data
-    objdata = []
-    objdata.append("classes = {0}".format(len(CATEGORIES)))
-    objdata.append("train  = data/train.txt".replace("/",train_machine_path_sep))
-    objdata.append("valid  = data/test.txt".replace("/",train_machine_path_sep))
-    objdata.append("names = data/obj.names".replace("/",train_machine_path_sep))
-    objdata.append("backup = backup")
-
-
-    total_image_count = 0
-    image_names = []
-    # loop in the main directory
-    for category_index, category in enumerate(CATEGORIES):
-
-        path = os.path.join(source_path, category)
-        number_of_categories = len(CATEGORIES)
-        index_of_category = CATEGORIES.index(category)
-        images = os.listdir(path)
-
-        # fix possible percentage error
-        if(percent_to_use <= 0 or percent_to_use > 1):
-            print("Enter a possible percentage between 0 and 1")
-            return
-        elif(int(percent_to_use * len(images)) == 0):
-            print("Percentage is too small for this set")
-            return
-        else:
-            stop_index = int(len(images)*percent_to_use)
-
-
-        # loop inside each category folder   itertools for stoping on a percentage
-        for image_index, img in enumerate(itertools.islice(images , 0, stop_index)):
-
-            # percent info
-            print("File name: {} - {}/{}  Image:{}/{}".format(category, index_of_category+1, number_of_categories, image_index+1, stop_index), end="\r")
-
-
-            # if auto_label_by_center is True create label files and label images by the image center
-            if(auto_label_by_center):
-                yolo_labels = "{0} {1} {2} {3} {4}".format(category_index, 0.5, 0.5, 1, 1)
-                
-                basename, extension = os.path.splitext(img)
-                txtname = basename + ".txt"
-                abs_save_path = os.path.join(path, txtname)
-        
-                __write_to_file([yolo_labels], file_name = abs_save_path)
-
-            # using save_path's last character (data/obj/ or data\\obj\\) to separete inner paths so if operating system is different inner paths will be matches 
-            img_and_path = save_path + category + save_path[-1] + img
-            image_names.append(img_and_path)
-            
-            # count images for dividing validation later
-            total_image_count += 1
-        
-        print("")
-
-
-    # shuffle and divide train and test sets
-    if(shuffle):
-        random.shuffle(image_names)
-    image_names_train = []
-    image_names_test = []
-    train_percent = int((validation_split * total_image_count))
-    image_names_train += image_names[train_percent:]
-    image_names_test += image_names[:train_percent]
-
-
-    # create files
-    __write_to_file(image_names_train, file_name = os.path.join(source_path, "train.txt"))
-    __write_to_file(image_names_test, file_name = os.path.join(source_path, "test.txt"))
-
-    __write_to_file(CATEGORIES, file_name = os.path.join(source_path, "obj.names"))
-    __write_to_file(objdata, file_name = os.path.join(source_path, "obj.data"))
-
-    print("\nfile saved -> {0}\nfile saved -> {1}\nfile saved -> {2}\nfile saved -> {3}".format("train.txt", "test.txt","obj.names","obj.data"))
-
 
 def make_prediction_from_directory_keras(images_path, keras_model_path, image_size = 224, print_output=True, model_summary=True, show_images=False, grayscale = False, files_to_exclude = [".DS_Store",""]):
     """
@@ -479,7 +370,191 @@ def make_prediction_from_array_keras(test_x, keras_model_path, print_output=True
     return predictions
 
 
-def make_prediction_from_directory_yolo(images_path, darknet_path, darknet_command = "./darknet detector test cfg/coco.data cfg/yolov3.cfg yolov3.weights {0} -i 0 -thresh 0.2 -dont_show", save_path = "detection_results", handle_shell_exceptions = True, files_to_exclude = [".DS_Store",""]):
+
+
+# yolo functions
+
+def create_training_data_yolo(source_path, percent_to_use = 1, validation_split = 0.2, create_cfg_file=True, auto_label_by_center = False, train_machine_path_sep = "/", shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data"]):
+    """
+    Creates required training files for yolo 
+
+    # Arguments:
+        source_path: source path of the images see input format
+        percent_to_use (1): percentage of data that will be used
+        validation_split (0.2): splits validation data with given percentage give 0 if you don't want validation split
+        create_cfg_file (True): creates a cfg file with default options for yolov3
+        auto_label_by_center (False): creates label txt files for all images labels images by their center automatically (use it if all of your datasets images are centered)
+        train_machine_path_sep ("/"): if you are going to use a windows machine for training change this  
+        shuffle (True): shuffle the paths
+        files_to_exclude ([".DS_Store","train.txt","test.txt","obj.names","obj.data"]): list of file names to exclude in the image directory (can be hidden files)
+
+    # Save:
+        Creates train.txt and test.txt files
+
+    # Input format:
+        source_path = some_dir
+        
+        /some_dir
+        ├──/class1
+            ├──img1.jpg
+            ├──img2.jpg
+        ├──/class2
+            ├──img3.jpg
+
+    # Output format:
+        /some_dir
+        train.txt --> data/obj/class1/img1.jpg
+        test.txt   
+        obj.data
+        obj.names                
+    """
+
+
+    # get all file names from main dir and sort the directories
+    CATEGORIES = os.listdir(source_path)  
+    CATEGORIES.sort()           
+
+    # remove excluded files
+    for exclude in files_to_exclude:
+        if exclude in CATEGORIES: 
+            CATEGORIES.remove(exclude)
+    
+    # change path seperator if needed
+    save_path = "data/obj/".replace("/",train_machine_path_sep)
+
+    # prepare obj.data
+    objdata = []
+    objdata.append("classes = {0}".format(len(CATEGORIES)))
+    objdata.append("train  = data/train.txt".replace("/",train_machine_path_sep))
+    objdata.append("valid  = data/test.txt".replace("/",train_machine_path_sep))
+    objdata.append("names = data/obj.names".replace("/",train_machine_path_sep))
+    objdata.append("backup = backup")
+
+
+    total_image_count = 0
+    image_names = []
+    # loop in the main directory
+    for category_index, category in enumerate(CATEGORIES):
+
+        path = os.path.join(source_path, category)
+        number_of_categories = len(CATEGORIES)
+        index_of_category = CATEGORIES.index(category)
+        images = os.listdir(path)
+
+        # fix possible percentage error
+        if(percent_to_use <= 0 or percent_to_use > 1):
+            print("Enter a possible percentage between 0 and 1")
+            return
+        elif(int(percent_to_use * len(images)) == 0):
+            print("Percentage is too small for this set")
+            return
+        else:
+            stop_index = int(len(images)*percent_to_use)
+
+
+        # loop inside each category folder   itertools for stoping on a percentage
+        for image_index, img in enumerate(itertools.islice(images , 0, stop_index)):
+
+            # percent info
+            print("File name: {} - {}/{}  Image:{}/{}".format(category, index_of_category+1, number_of_categories, image_index+1, stop_index), end="\r")
+
+
+            # if auto_label_by_center is True create label files and label images by the image center
+            if(auto_label_by_center):
+                yolo_labels = "{0} {1} {2} {3} {4}".format(category_index, 0.5, 0.5, 1, 1)
+                
+                basename, extension = os.path.splitext(img)
+                txtname = basename + ".txt"
+                abs_save_path = os.path.join(path, txtname)
+        
+                __write_to_file([yolo_labels], file_name = abs_save_path)
+
+            # using save_path's last character (data/obj/ or data\\obj\\) to separete inner paths so if operating system is different inner paths will be matches 
+            img_and_path = save_path + category + save_path[-1] + img
+            image_names.append(img_and_path)
+            
+            # count images for dividing validation later
+            total_image_count += 1
+        
+        print("")
+
+
+    # shuffle and divide train and test sets
+    if(shuffle):
+        random.shuffle(image_names)
+    image_names_train = []
+    image_names_test = []
+    train_percent = int((validation_split * total_image_count))
+    image_names_train += image_names[train_percent:]
+    image_names_test += image_names[:train_percent]
+
+
+    # create files
+    __write_to_file(image_names_train, file_name = os.path.join(source_path, "train.txt"))
+    __write_to_file(image_names_test, file_name = os.path.join(source_path, "test.txt"))
+
+    __write_to_file(CATEGORIES, file_name = os.path.join(source_path, "obj.names"))
+    __write_to_file(objdata, file_name = os.path.join(source_path, "obj.data"))
+
+    print("\n")
+
+    if(create_cfg_file):
+        create_cfg_file_yolo(source_path, number_of_categories, batch=64, sub=8, width=416, height=416)
+        print("file saved -> {0}".format("yolo-obj.cfg"))
+
+    print("file saved -> {0}\nfile saved -> {1}\nfile saved -> {2}\nfile saved -> {3}".format("train.txt", "test.txt","obj.names","obj.data"))
+
+
+def create_cfg_file_yolo(save_path, classes, batch=64, sub=8, width=416, height=416):
+    """
+    creates config file with default options for yolo3
+
+
+    # config file structure
+    # 0 batch 64
+    # 1 sub 8
+    # 2 width 416
+    # 3 height 416
+    # 4 max_batches classes*2000 but no less than 4000
+    # 5 steps %80 max_batches
+    # 6 steps %90 max_batches
+    # 7 classes
+    # 8 filters before yolo layers (classes+5)*3
+    """
+    
+    if(classes < 1):
+        raise ValueError("class count can't be smaller than 1") 
+
+    if(width%32 != 0 or height%32 != 0):
+        raise ValueError("height and width must be divisible by 32") 
+
+    yolo_cfg_template_path = os.path.join("imagepreprocessing","cfg_file_templates", "yolo-obj.cfg")
+
+    if not os.path.exists(yolo_cfg_template_path):
+        print("yolo_cfg_template not found")
+        return
+
+    # read cfg template
+    yolo_cfg_template = __read_from_file(yolo_cfg_template_path)
+
+    # set up parameters
+    if(classes == 1):
+        max_batches = 4000
+    else:
+        max_batches = classes * 2000
+
+    steps1 = int((max_batches * 80) /100)
+    steps2 = int((max_batches * 90) /100)
+
+    filters = (classes+5)*3
+
+    yolo_cfg_template = yolo_cfg_template.format(batch,sub,width,height,max_batches,steps1,steps2,classes,filters)
+
+    # save cfg to save path
+    __write_to_file([yolo_cfg_template], os.path.join(save_path, "yolo-obj.cfg"))
+
+
+def make_prediction_from_directory_yolo(images_path, darknet_path, darknet_command = "./darknet detector test cfg/coco.data cfg/yolov3.cfg yolov3.weights {0} -i 0 -thresh 0.2 -dont_show", save_path = "detection_results", files_to_exclude = [".DS_Store",""]):
     """
     
     """
@@ -501,21 +576,16 @@ def make_prediction_from_directory_yolo(images_path, darknet_path, darknet_comma
     image_count = len(images)
     for index, image in enumerate(images):
         abs_path = os.path.join(images_path, image)
-
-        if(handle_shell_exceptions):
-            try:
-                __run_shell_command("cd {0} && {1}".format(darknet_path,darknet_command.format(abs_path)))
-            except:
-                pass
-        else:
-            __run_shell_command("cd {0} && {1}".format(darknet_path,darknet_command.format(abs_path)))
-
+        __run_shell_command("cd {0} && {1}".format(darknet_path,darknet_command.format(abs_path)))
         copyfile(os.path.join(darknet_path, "predictions.jpg"), os.path.join(save_path, "predictions{0}.jpg".format(index)))
         
-        print("File name: {0} - {1}/{2}".format(image, index+1, image_count), end="\r")
+        # print("File name: {0} - {1}/{2}".format(image, index+1, image_count), end="\r")
 
     print("\nAll images saved to {0}".format(save_path))
 
+
+
+# other utilities
 
 def train_test_split(train_x, train_y, test_size=0.2, save_path=None):
     """
@@ -637,6 +707,8 @@ def create_confusion_matrix(predictions, actual_values, class_names=None, one_ho
         plt.show()
 
     return cnf_matrix
+
+
 
 
 
