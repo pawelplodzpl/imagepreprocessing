@@ -500,7 +500,6 @@ def create_training_data_yolo(source_path, percent_to_use = 1, validation_split 
 
     if(create_cfg_file):
         create_cfg_file_yolo(source_path, number_of_categories, batch=64, sub=8, width=416, height=416)
-        print("file saved -> {0}".format("yolo-obj.cfg"))
 
     print("file saved -> {0}\nfile saved -> {1}\nfile saved -> {2}\nfile saved -> {3}".format("train.txt", "test.txt","obj.names","obj.data"))
 
@@ -553,10 +552,13 @@ def create_cfg_file_yolo(save_path, classes, batch=64, sub=8, width=416, height=
     # save cfg to save path
     __write_to_file([yolo_cfg_template], os.path.join(save_path, "yolo-obj.cfg"))
 
+    print("file saved -> {0}".format("yolo-obj.cfg"))
 
-def make_prediction_from_directory_yolo(images_path, darknet_path, darknet_command = "./darknet detector test cfg/coco.data cfg/yolov3.cfg yolov3.weights {0} -i 0 -thresh 0.2 -dont_show", save_path = "detection_results", files_to_exclude = [".DS_Store",""]):
+
+def make_prediction_from_directory_yolo(images_path, darknet_path, save_path = "detection_results", darknet_command = "./darknet detector test cfg/coco.data cfg/yolov3.cfg yolov3.weights {0} -i 0 -thresh 0.2 -dont_show", files_to_exclude = [".DS_Store",""]):
     """
-    
+    makes prediction for multiple images from directory
+    it uses shell command to execute darknet
     """
 
     save_path = os.path.join(darknet_path, save_path)
@@ -579,7 +581,7 @@ def make_prediction_from_directory_yolo(images_path, darknet_path, darknet_comma
         __run_shell_command("cd {0} && {1}".format(darknet_path,darknet_command.format(abs_path)))
         copyfile(os.path.join(darknet_path, "predictions.jpg"), os.path.join(save_path, "predictions{0}.jpg".format(index)))
         
-        # print("File name: {0} - {1}/{2}".format(image, index+1, image_count), end="\r")
+        print("File name: {0} - {1}/{2}".format(image, index+1, image_count), end="\r")
 
     print("\nAll images saved to {0}".format(save_path))
 
