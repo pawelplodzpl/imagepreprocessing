@@ -5,14 +5,14 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="imagepreprocessing",
-    version="0.7.0",
+    version="0.8.0",
     author="Can Kurt",
     author_email="can.kurt.aa@gmail.com",
     description="image preprocessing",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/cccaaannn/imagepreprocessing",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=['test.py', ]),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

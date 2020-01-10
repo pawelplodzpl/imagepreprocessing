@@ -1,0 +1,2 @@
+C:\Users\can\Desktop\yolo_annotation_convert\images\a.jpeg
+C:\Users\can\Desktop\yolo_annotation_convert\images\b.jpeg

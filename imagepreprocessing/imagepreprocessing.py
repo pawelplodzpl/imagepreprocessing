@@ -4,30 +4,14 @@ import pickle
 import itertools 
 from shutil import copyfile
 
+# from .file_operations import __read_from_file, __write_to_file
+# from .convert_annotations import __convert_annotations_opencv_to_yolo, __convert_annotations_yolo_to_opencv
+# from .other_fuctions import __run_shell_command
 
-# private functions
+from file_operations import __read_from_file, __write_to_file
+from convert_annotations import __convert_annotations_opencv_to_yolo, __convert_annotations_yolo_to_opencv
+from other_fuctions import __run_shell_command
 
-def __read_from_file(file_name):
-    try:
-        with open(file_name,'r', encoding='utf-8') as file:
-            content = file.read()
-            return content
-    except (OSError, IOError) as e:
-        print(e)
-    
-def __write_to_file(to_write, file_name):
-    try:
-        with open(file_name,'w', encoding='utf-8') as file:
-            for item in to_write:
-                file.write(item.__str__())
-                file.write("\n")
-    except (OSError, IOError) as e:
-        print(e)
-
-def __run_shell_command(command):
-    import subprocess
-    output = subprocess.check_output(command, shell=True).decode("ascii")
-    return output
 
 
 
@@ -371,10 +355,9 @@ def make_prediction_from_array_keras(test_x, keras_model_path, print_output=True
 
 
 
-
 # yolo functions
 
-def create_training_data_yolo(source_path, percent_to_use = 1, validation_split = 0.2, create_cfg_file=True, auto_label_by_center = False, train_machine_path_sep = "/", shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data"]):
+def create_training_data_yolo(source_path, percent_to_use = 1, validation_split = 0.2, create_cfg_file=True, auto_label_by_center = None, train_machine_path_sep = "/", shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data","yolo-obj.cfg"]):
     """
     Creates required training files for yolo 
 
@@ -386,7 +369,7 @@ def create_training_data_yolo(source_path, percent_to_use = 1, validation_split 
         auto_label_by_center (False): creates label txt files for all images labels images by their center automatically (use it if all of your datasets images are centered)
         train_machine_path_sep ("/"): if you are going to use a windows machine for training change this  
         shuffle (True): shuffle the paths
-        files_to_exclude ([".DS_Store","train.txt","test.txt","obj.names","obj.data"]): list of file names to exclude in the image directory (can be hidden files)
+        files_to_exclude ([".DS_Store","train.txt","test.txt","obj.names","obj.data","yolo-obj.cfg"]): list of file names to exclude in the image directory (can be hidden files)
 
     # Save:
         Creates train.txt and test.txt files
@@ -441,6 +424,11 @@ def create_training_data_yolo(source_path, percent_to_use = 1, validation_split 
         index_of_category = CATEGORIES.index(category)
         images = os.listdir(path)
 
+        # exclude possible annotation files
+        for image in images:
+            if ".txt" in image: 
+                images.remove(image)
+
         # fix possible percentage error
         if(percent_to_use <= 0 or percent_to_use > 1):
             print("Enter a possible percentage between 0 and 1")
@@ -461,13 +449,25 @@ def create_training_data_yolo(source_path, percent_to_use = 1, validation_split 
 
             # if auto_label_by_center is True create label files and label images by the image center
             if(auto_label_by_center):
-                yolo_labels = "{0} {1} {2} {3} {4}".format(category_index, 0.5, 0.5, 1, 1)
+                if(len(auto_label_by_center) != 4):
+                    raise ValueError("4 values needed for random annotations '{0}' is given".format(len(auto_label_by_center)))
+                for label in auto_label_by_center:
+                    if(label < 0 or label > 1):
+                        raise ValueError("labels has to be between 0 and 1 '{0}' is given".format(label))
+
+                c1 = random.uniform(auto_label_by_center[0], auto_label_by_center[1])
+                c2 = random.uniform(auto_label_by_center[0], auto_label_by_center[1])
+                
+                w = random.uniform(auto_label_by_center[2], auto_label_by_center[3])
+                h = random.uniform(auto_label_by_center[2], auto_label_by_center[3])
+                
+                yolo_labels = "{0} {1} {2} {3} {4}".format(category_index, c1,c2, w, h)
                 
                 basename, extension = os.path.splitext(img)
                 txtname = basename + ".txt"
                 abs_save_path = os.path.join(path, txtname)
         
-                __write_to_file([yolo_labels], file_name = abs_save_path)
+                __write_to_file([yolo_labels], file_name = abs_save_path, write_mode="w")
 
             # using save_path's last character (data/obj/ or data\\obj\\) to separete inner paths so if operating system is different inner paths will be matches 
             img_and_path = save_path + category + save_path[-1] + img
@@ -490,11 +490,11 @@ def create_training_data_yolo(source_path, percent_to_use = 1, validation_split 
 
 
     # create files
-    __write_to_file(image_names_train, file_name = os.path.join(source_path, "train.txt"))
-    __write_to_file(image_names_test, file_name = os.path.join(source_path, "test.txt"))
+    __write_to_file(image_names_train, file_name = os.path.join(source_path, "train.txt"), write_mode="w")
+    __write_to_file(image_names_test, file_name = os.path.join(source_path, "test.txt"), write_mode="w")
 
-    __write_to_file(CATEGORIES, file_name = os.path.join(source_path, "obj.names"))
-    __write_to_file(objdata, file_name = os.path.join(source_path, "obj.data"))
+    __write_to_file(CATEGORIES, file_name = os.path.join(source_path, "obj.names"), write_mode="w")
+    __write_to_file(objdata, file_name = os.path.join(source_path, "obj.data"), write_mode="w")
 
     print("\n")
 
@@ -502,6 +502,256 @@ def create_training_data_yolo(source_path, percent_to_use = 1, validation_split 
         create_cfg_file_yolo(source_path, number_of_categories, batch=64, sub=8, width=416, height=416)
 
     print("file saved -> {0}\nfile saved -> {1}\nfile saved -> {2}\nfile saved -> {3}".format("train.txt", "test.txt","obj.names","obj.data"))
+
+
+def yolo_annotation_tool(images_path, class_names_file, windows_size=(1200,700), image_extensions = [".jpg", ".JPG", ".jpeg", ".png", ".PNG"]):
+    """
+    annotation tool for yolo labeling
+    
+    # usage 
+    a go backward
+    d go forward
+    s save selected annotations
+    z delete last annotation
+    r remove unsaved annotations
+    c clear all saved annotations
+    """
+    import cv2
+    import numpy as np
+
+    # read images
+    images = os.listdir(images_path)
+    images.sort()
+
+    # remove not included files
+    for image in images:
+        image_name, image_extension = os.path.splitext(image)
+        if image_extension not in image_extensions: 
+            images.remove(image)        
+
+    # add paths to images
+    images = [os.path.join(images_path, image) for image in images]
+
+    # read class names
+    class_names = __read_from_file(class_names_file)
+    class_names = class_names.split()
+
+
+    def __on__trackbar_change(self):
+        """
+        Callback function for trackbar
+        """
+        pass
+
+    def __resize_with_aspect_ratio(image, width, height, inter=cv2.INTER_AREA):
+        """
+        resize image while saving aspect ratio
+        """
+        (h, w) = image.shape[:2]
+
+        if width is None and height is None:
+            return image
+        if h > w:
+            r = height / float(h)
+            dim = (int(w * r), height)
+        else:
+            r = width / float(w)
+            dim = (width, int(h * r))
+
+        image = cv2.resize(image, dim, interpolation=inter)
+
+        return image
+
+    def __draw_rectangle(event, x, y, flags, param):
+        """
+        draws rectangle with mouse events
+        """
+        global refPt, drawing
+
+        if event == cv2.EVENT_LBUTTONDOWN:
+            refPt = [(x, y)]
+            drawing = True
+
+        elif event == cv2.EVENT_LBUTTONUP:
+            refPt.append((x, y))
+            drawing = False
+    
+            cv2.rectangle(image, refPt[0], refPt[1], (255, 0, 0), 2)
+
+            # add points
+            points.append(((label),refPt[0],refPt[1]))
+
+    def __load_annotations_from_file(image_path):
+        """
+        loads an images annotations with using that images path returns none if annotation is not exists
+        """
+        # checking if the annotation file exists if exists read it
+        image_name, image_extension = os.path.splitext(image_path)
+        annotation_file_path = "{0}.txt".format(image_name)
+        if os.path.exists(annotation_file_path):
+            annotations = __read_from_file(annotation_file_path)
+            annotations = annotations.split("\n")
+            annotations = filter(None, annotations)  # delete empty lists 
+            annotations = [annotation.split() for annotation in annotations]
+            # convert annotations to float and label to int
+            # yolo annotation structure: (0 0.8 0.8 0.5 0.5)
+            for annotation in annotations:
+                annotation[0] = int(annotation[0])
+                annotation[1] = float(annotation[1])
+                annotation[2] = float(annotation[2])
+                annotation[3] = float(annotation[3])
+                annotation[4] = float(annotation[4])
+            return annotations
+        else:
+            return None
+
+    def __save_annotations_to_file(image_path, yolo_labels_lists, write_mode):
+        """
+        saves yolo annnotations lists to annotations file list of lists:[[0,1,1,1,1],[1,0,0,0,0]]
+        returns annotation_file_path 
+        """
+        yolo_labels = []
+        for yolo_labels_list in yolo_labels_lists:
+            yolo_labels.append("{0} {1:.6} {2:.6} {3:.6} {4:.6}".format(yolo_labels_list[0], yolo_labels_list[1], yolo_labels_list[2], yolo_labels_list[3], yolo_labels_list[4]))
+
+        image_name, image_extension = os.path.splitext(image_path)
+        annotation_file_path = "{0}.txt".format(image_name)
+
+        __write_to_file(yolo_labels, annotation_file_path, write_mode=write_mode)
+
+        return annotation_file_path
+
+    def __draw_annotations(image_path, class_names):
+        """
+        draw annotations if file is exists
+        """
+
+        # loading annotation file if exists
+        annotations = __load_annotations_from_file(image_path)
+
+        if(not annotations):
+            return None, 0
+
+        # loading image 
+        image = cv2.imread(image_path)
+        
+        # get dimensions of image
+        image_height = np.size(image, 0)
+        image_width = np.size(image, 1)
+
+        # convert points
+        opencv_points = __convert_annotations_yolo_to_opencv(image_width, image_height, annotations)
+
+        # draw the rectangles using converted points
+        for opencv_point in opencv_points:
+            cv2.rectangle(image, (opencv_point[1], opencv_point[2]), (opencv_point[3], opencv_point[4]), (0,200,100), 5)
+            cv2.line(image, (opencv_point[1], opencv_point[2]), (opencv_point[3], opencv_point[4]), (255, 0, 0), 1) 
+            cv2.putText(image, "{0}".format(class_names[opencv_point[0]]), (opencv_point[1], opencv_point[2]), cv2.FONT_HERSHEY_SIMPLEX, 2, color=(0, 0, 0), thickness=3)
+
+        return image, len(annotations)
+
+    def __refresh_image(image_index):
+        """
+        if annotation file exists draw the rectangles resize and return the image if not just return the resized image
+        """
+        image, annoted_object_count = __draw_annotations(images[image_index], class_names)
+        if(image is None):
+            image = cv2.imread(images[image_index])
+        # image = __resize_with_aspect_ratio(image, max_windows_size[0], max_windows_size[1])
+        image = cv2.resize(image, windows_size)
+
+
+        
+        # show some info with puttext
+        cv2.putText(image, "{1}/{2} objects:{0}".format(annoted_object_count, len(images), image_index+1), (0, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color=(0, 200, 100), thickness=2)
+
+        return image 
+
+
+    points = []
+    image_index = 0
+
+    # create window and set it up
+    cv2.namedWindow("image")
+    cv2.moveWindow("image", 40,30)
+    cv2.setMouseCallback("image", __draw_rectangle)
+    cv2.createTrackbar('label', "image", 0, len(class_names)-1, __on__trackbar_change)
+    image = __refresh_image(image_index)
+
+
+    # gui loop
+    while(True):
+
+        label = cv2.getTrackbarPos('label', "image")
+        cv2.imshow("image", image)  
+        key = cv2.waitKey(1)
+        
+        
+        # save selected annotations to a file
+        if(key == ord("s")):
+            if(len(points) > 0):
+
+                image_height = np.size(image, 0)
+                image_width = np.size(image, 1)
+
+                # convert and save annotations to file
+                yolo_labels_lists = __convert_annotations_opencv_to_yolo(image_width,image_height,points)
+                __save_annotations_to_file(images[image_index], yolo_labels_lists, "a")
+
+                # reset points and refresh image
+                points = []
+                image = __refresh_image(image_index)
+
+                print("image coordinates:{0} yolo points{1}".format(points,yolo_labels_lists))
+
+
+        # move backward
+        if(key == ord("a")):
+            if(image_index > 0):
+                image_index -= 1
+                image = __refresh_image(image_index)
+                points = []
+
+        # move forward
+        if(key == ord("d")):
+            if(image_index < len(images)-1):
+                image_index += 1
+                image = __refresh_image(image_index)
+                points = []
+
+        # delete last annotation
+        if(key == ord("z")):
+            # load annotations
+            yolo_labels_lists = __load_annotations_from_file(images[image_index])            
+            if(yolo_labels_lists):
+                # delete last one
+                yolo_labels_lists.pop()
+                # save new annotations (last one deleted)
+                annotation_file_path = __save_annotations_to_file(images[image_index], yolo_labels_lists, "w")
+                image =__refresh_image(image_index)
+
+                # if file is empty delete it
+                if(len(yolo_labels_lists) == 0):
+                    os.remove(annotation_file_path)
+
+        # refresh current image
+        if(key == ord("r")):
+            image =__refresh_image(image_index)
+            points = []
+            
+        # clear annotations
+        if(key == ord("c")):
+            image_name, image_extension = os.path.splitext(images[image_index])
+            annotation_file_path = "{0}.txt".format(image_name)
+            os.remove(annotation_file_path)
+            image = __refresh_image(image_index)        
+
+        # quit on esc
+        if(key == 27):
+            break
+
+
+    cv2.destroyAllWindows()
 
 
 def create_cfg_file_yolo(save_path, classes, batch=64, sub=8, width=416, height=416):
@@ -550,7 +800,7 @@ def create_cfg_file_yolo(save_path, classes, batch=64, sub=8, width=416, height=
     yolo_cfg_template = yolo_cfg_template.format(batch,sub,width,height,max_batches,steps1,steps2,classes,filters)
 
     # save cfg to save path
-    __write_to_file([yolo_cfg_template], os.path.join(save_path, "yolo-obj.cfg"))
+    __write_to_file([yolo_cfg_template], os.path.join(save_path, "yolo-obj.cfg"), write_mode="w")
 
     print("file saved -> {0}".format("yolo-obj.cfg"))
 
@@ -850,7 +1100,7 @@ def __create_training_data_yolo(source_path, save_path = "data/obj/", percent_to
             text_name = basename + ".txt"
             path_for_txt_file = os.path.join(absolute_save_path, text_name)
  
-            __write_to_file([yolo_labels], path_for_txt_file)
+            __write_to_file([yolo_labels], path_for_txt_file, write_mode="w")
 
 
             # copy_files_to_new_path
@@ -883,11 +1133,11 @@ def __create_training_data_yolo(source_path, save_path = "data/obj/", percent_to
     objdata.append("backup = backup")
 
     # save to file
-    __write_to_file(image_names_train, file_name = os.path.join(source_path, "train.txt"))
-    __write_to_file(image_names_test, file_name = os.path.join(source_path, "test.txt"))
+    __write_to_file(image_names_train, file_name = os.path.join(source_path, "train.txt"), write_mode="w")
+    __write_to_file(image_names_test, file_name = os.path.join(source_path, "test.txt"), write_mode="w")
 
-    __write_to_file(CATEGORIES, file_name = os.path.join(source_path, "obj.names"))
-    __write_to_file(objdata, file_name = os.path.join(source_path, "obj.data"))
+    __write_to_file(CATEGORIES, file_name = os.path.join(source_path, "obj.names"), write_mode="w")
+    __write_to_file(objdata, file_name = os.path.join(source_path, "obj.data"), write_mode="w")
 
     print("\nfile saved -> {0}\nfile saved -> {1}\nfile saved -> {2}\nfile saved -> {3}".format("train.txt", "test.txt","obj.names","obj.data"))
 

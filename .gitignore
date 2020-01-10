@@ -1,5 +1,4 @@
 .vscode
-test.py
 dist
 imagepreprocessing.egg-info
 build
