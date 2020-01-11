@@ -4,13 +4,13 @@ import pickle
 import itertools 
 from shutil import copyfile
 
-# from .file_operations import __read_from_file, __write_to_file
-# from .convert_annotations import __convert_annotations_opencv_to_yolo, __convert_annotations_yolo_to_opencv
-# from .other_fuctions import __run_shell_command
+from .file_operations import __read_from_file, __write_to_file
+from .convert_annotations import __convert_annotations_opencv_to_yolo, __convert_annotations_yolo_to_opencv
+from .other_fuctions import __run_shell_command
 
-from file_operations import __read_from_file, __write_to_file
-from convert_annotations import __convert_annotations_opencv_to_yolo, __convert_annotations_yolo_to_opencv
-from other_fuctions import __run_shell_command
+# from file_operations import __read_from_file, __write_to_file
+# from convert_annotations import __convert_annotations_opencv_to_yolo, __convert_annotations_yolo_to_opencv
+# from other_fuctions import __run_shell_command
 
 
 
@@ -504,10 +504,12 @@ def create_training_data_yolo(source_path, percent_to_use = 1, validation_split 
     print("file saved -> {0}\nfile saved -> {1}\nfile saved -> {2}\nfile saved -> {3}".format("train.txt", "test.txt","obj.names","obj.data"))
 
 
-def yolo_annotation_tool(images_path, class_names_file, windows_size=(1200,700), image_extensions = [".jpg", ".JPG", ".jpeg", ".png", ".PNG"]):
+def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,700), image_extensions = [".jpg", ".JPG", ".jpeg", ".png", ".PNG"]):
     """
     annotation tool for yolo labeling
     
+    # warning it uses two global variables (__coords__, __drawing__) due to the opencvs mouse callback function
+
     # usage 
     a go backward
     d go forward
@@ -516,8 +518,9 @@ def yolo_annotation_tool(images_path, class_names_file, windows_size=(1200,700),
     r remove unsaved annotations
     c clear all saved annotations
     """
-    import cv2
+    import cv2 
     import numpy as np
+
 
     # read images
     images = os.listdir(images_path)
@@ -537,12 +540,13 @@ def yolo_annotation_tool(images_path, class_names_file, windows_size=(1200,700),
     class_names = class_names.split()
 
 
-    def __on__trackbar_change(self):
+    # -----unused-----
+    def __on__trackbar_change(image):
         """
         Callback function for trackbar
         """
         pass
-
+        
     def __resize_with_aspect_ratio(image, width, height, inter=cv2.INTER_AREA):
         """
         resize image while saving aspect ratio
@@ -561,25 +565,56 @@ def yolo_annotation_tool(images_path, class_names_file, windows_size=(1200,700),
         image = cv2.resize(image, dim, interpolation=inter)
 
         return image
+    # ---------------
 
-    def __draw_rectangle(event, x, y, flags, param):
+
+
+    def __draw_rectangle_on_mouse_drag(event, x, y, flags, param):
         """
         draws rectangle with mouse events
         """
-        global refPt, drawing
+        global __coords__, __drawing__
 
         if event == cv2.EVENT_LBUTTONDOWN:
-            refPt = [(x, y)]
-            drawing = True
+            __coords__ = [(x, y)]
+            __drawing__ = True
+        
+        elif event == 0 and __drawing__:
+            __coords__[1:] = [(x, y)]
+            im = image.copy()
+            cv2.rectangle(im, __coords__[0], __coords__[1], (255, 0, 0), 2)
+            cv2.imshow("image", im) 
 
         elif event == cv2.EVENT_LBUTTONUP:
-            refPt.append((x, y))
-            drawing = False
+            # __coords__.append((x, y))
+            __coords__[1:] = [(x, y)]
+            __drawing__ = False
     
-            cv2.rectangle(image, refPt[0], refPt[1], (255, 0, 0), 2)
+            cv2.rectangle(image, __coords__[0], __coords__[1], (255, 0, 0), 2)
 
             # add points
-            points.append(((label),refPt[0],refPt[1]))
+            points.append(((label),__coords__[0],__coords__[1]))
+
+
+        elif event == cv2.EVENT_RBUTTONDOWN:
+            pass
+
+    # if the las character of the file is not \n appending creates problems
+    def __save_annotations_to_file(image_path, yolo_labels_lists, write_mode):
+        """
+        saves yolo annnotations lists to annotations file list of lists:[[0,1,1,1,1],[1,0,0,0,0]]
+        returns annotation_file_path 
+        """
+        yolo_labels = []
+        for yolo_labels_list in yolo_labels_lists:
+            yolo_labels.append("{0} {1:.6} {2:.6} {3:.6} {4:.6}".format(yolo_labels_list[0], yolo_labels_list[1], yolo_labels_list[2], yolo_labels_list[3], yolo_labels_list[4]))
+
+        image_name, image_extension = os.path.splitext(image_path)
+        annotation_file_path = "{0}.txt".format(image_name)
+
+        __write_to_file(yolo_labels, annotation_file_path, write_mode=write_mode)
+
+        return annotation_file_path
 
     def __load_annotations_from_file(image_path):
         """
@@ -605,23 +640,7 @@ def yolo_annotation_tool(images_path, class_names_file, windows_size=(1200,700),
         else:
             return None
 
-    def __save_annotations_to_file(image_path, yolo_labels_lists, write_mode):
-        """
-        saves yolo annnotations lists to annotations file list of lists:[[0,1,1,1,1],[1,0,0,0,0]]
-        returns annotation_file_path 
-        """
-        yolo_labels = []
-        for yolo_labels_list in yolo_labels_lists:
-            yolo_labels.append("{0} {1:.6} {2:.6} {3:.6} {4:.6}".format(yolo_labels_list[0], yolo_labels_list[1], yolo_labels_list[2], yolo_labels_list[3], yolo_labels_list[4]))
-
-        image_name, image_extension = os.path.splitext(image_path)
-        annotation_file_path = "{0}.txt".format(image_name)
-
-        __write_to_file(yolo_labels, annotation_file_path, write_mode=write_mode)
-
-        return annotation_file_path
-
-    def __draw_annotations(image_path, class_names):
+    def __draw_annotations_to_image(image_path, class_names):
         """
         draw annotations if file is exists
         """
@@ -644,49 +663,61 @@ def yolo_annotation_tool(images_path, class_names_file, windows_size=(1200,700),
 
         # draw the rectangles using converted points
         for opencv_point in opencv_points:
-            cv2.rectangle(image, (opencv_point[1], opencv_point[2]), (opencv_point[3], opencv_point[4]), (0,200,100), 5)
+            cv2.rectangle(image, (opencv_point[1], opencv_point[2]), (opencv_point[3], opencv_point[4]), (0,200,100), 2)
             cv2.line(image, (opencv_point[1], opencv_point[2]), (opencv_point[3], opencv_point[4]), (255, 0, 0), 1) 
-            cv2.putText(image, "{0}".format(class_names[opencv_point[0]]), (opencv_point[1], opencv_point[2]), cv2.FONT_HERSHEY_SIMPLEX, 2, color=(0, 0, 0), thickness=3)
+            cv2.putText(image, "{0}".format(class_names[opencv_point[0]]), (opencv_point[1], opencv_point[2]), cv2.FONT_HERSHEY_SIMPLEX, 1.5, color=(0, 0, 0), thickness=2)
 
         return image, len(annotations)
 
-    def __refresh_image(image_index):
+    def __refresh_image(image_index, label):
         """
         if annotation file exists draw the rectangles resize and return the image if not just return the resized image
+        also draw information to the image
         """
-        image, annoted_object_count = __draw_annotations(images[image_index], class_names)
+        image, annoted_object_count = __draw_annotations_to_image(images[image_index], class_names)
         if(image is None):
             image = cv2.imread(images[image_index])
         # image = __resize_with_aspect_ratio(image, max_windows_size[0], max_windows_size[1])
-        image = cv2.resize(image, windows_size)
-
-
+        image = cv2.resize(image, max_windows_size)
         
         # show some info with puttext
-        cv2.putText(image, "{1}/{2} objects:{0}".format(annoted_object_count, len(images), image_index+1), (0, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color=(0, 200, 100), thickness=2)
+        cv2.putText(image, "{0}/{1} objects:{2} label: {3}".format(len(images), image_index+1, annoted_object_count, class_names[label]), (0, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color=(0, 200, 100), thickness=2)
 
         return image 
 
 
+    
+
     points = []
     image_index = 0
+    global __drawing__
+    __drawing__ = False
 
     # create window and set it up
     cv2.namedWindow("image")
     cv2.moveWindow("image", 40,30)
-    cv2.setMouseCallback("image", __draw_rectangle)
+    cv2.setMouseCallback("image", __draw_rectangle_on_mouse_drag,image)
     cv2.createTrackbar('label', "image", 0, len(class_names)-1, __on__trackbar_change)
-    image = __refresh_image(image_index)
+    image = __refresh_image(image_index, 0)
 
 
+    label_temp = 0
     # gui loop
     while(True):
 
         label = cv2.getTrackbarPos('label', "image")
-        cv2.imshow("image", image)  
-        key = cv2.waitKey(1)
         
+        # bu ne salak yontem lan kafan mi iyidi yaparken
+        if(label != label_temp):
+            image = __refresh_image(image_index, label)
+            label_temp = label
+
+        if(not __drawing__):
+            cv2.imshow("image", image)  
         
+        key = cv2.waitKey(30)
+        
+
         # save selected annotations to a file
         if(key == ord("s")):
             if(len(points) > 0):
@@ -699,8 +730,8 @@ def yolo_annotation_tool(images_path, class_names_file, windows_size=(1200,700),
                 __save_annotations_to_file(images[image_index], yolo_labels_lists, "a")
 
                 # reset points and refresh image
+                image = __refresh_image(image_index, label)
                 points = []
-                image = __refresh_image(image_index)
 
                 print("image coordinates:{0} yolo points{1}".format(points,yolo_labels_lists))
 
@@ -709,14 +740,14 @@ def yolo_annotation_tool(images_path, class_names_file, windows_size=(1200,700),
         if(key == ord("a")):
             if(image_index > 0):
                 image_index -= 1
-                image = __refresh_image(image_index)
+                image = __refresh_image(image_index, label)
                 points = []
 
         # move forward
         if(key == ord("d")):
             if(image_index < len(images)-1):
                 image_index += 1
-                image = __refresh_image(image_index)
+                image = __refresh_image(image_index, label)
                 points = []
 
         # delete last annotation
@@ -728,7 +759,8 @@ def yolo_annotation_tool(images_path, class_names_file, windows_size=(1200,700),
                 yolo_labels_lists.pop()
                 # save new annotations (last one deleted)
                 annotation_file_path = __save_annotations_to_file(images[image_index], yolo_labels_lists, "w")
-                image =__refresh_image(image_index)
+                image =__refresh_image(image_index, label)
+                points = []
 
                 # if file is empty delete it
                 if(len(yolo_labels_lists) == 0):
@@ -736,15 +768,16 @@ def yolo_annotation_tool(images_path, class_names_file, windows_size=(1200,700),
 
         # refresh current image
         if(key == ord("r")):
-            image =__refresh_image(image_index)
+            image =__refresh_image(image_index, label)
             points = []
-            
+
         # clear annotations
         if(key == ord("c")):
             image_name, image_extension = os.path.splitext(images[image_index])
             annotation_file_path = "{0}.txt".format(image_name)
             os.remove(annotation_file_path)
-            image = __refresh_image(image_index)        
+            image = __refresh_image(image_index, label)        
+            points = []
 
         # quit on esc
         if(key == 27):
@@ -752,6 +785,7 @@ def yolo_annotation_tool(images_path, class_names_file, windows_size=(1200,700),
 
 
     cv2.destroyAllWindows()
+
 
 
 def create_cfg_file_yolo(save_path, classes, batch=64, sub=8, width=416, height=416):

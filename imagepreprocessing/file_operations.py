@@ -1,4 +1,3 @@
-
 def __read_from_file(file_name):
     try:
         with open(file_name,'r', encoding='utf-8') as file:

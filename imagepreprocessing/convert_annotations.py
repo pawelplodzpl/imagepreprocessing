@@ -1,4 +1,3 @@
-
 def __convert_annotations_opencv_to_yolo(image_width, image_height, all_points):
     """
     0 x1 y1 x2 y2 -> 0 centerX centerY width height
