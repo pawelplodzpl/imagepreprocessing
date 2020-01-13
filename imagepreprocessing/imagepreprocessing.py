@@ -4,13 +4,13 @@ import pickle
 import itertools 
 from shutil import copyfile
 
-from .file_operations import __read_from_file, __write_to_file
-from .convert_annotations import __convert_annotations_opencv_to_yolo, __convert_annotations_yolo_to_opencv
-from .other_fuctions import __run_shell_command
+# from .file_operations import __read_from_file, __write_to_file
+# from .convert_annotations import __convert_annotations_opencv_to_yolo, __convert_annotations_yolo_to_opencv
+# from .other_fuctions import __run_shell_command
 
-# from file_operations import __read_from_file, __write_to_file
-# from convert_annotations import __convert_annotations_opencv_to_yolo, __convert_annotations_yolo_to_opencv
-# from other_fuctions import __run_shell_command
+from file_operations import __read_from_file, __write_to_file
+from convert_annotations import __convert_annotations_opencv_to_yolo, __convert_annotations_yolo_to_opencv
+from other_fuctions import __run_shell_command
 
  
 
@@ -98,18 +98,15 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
 
         # fix possible percentage errors
         if(validation_split < 0 or validation_split > 1):
-            print("Enter a possible validation_split between 0 and 1")
-            return
+            raise ValueError("Validation_split should be between 0 and 1")
 
         if(percent_to_use <= 0 or percent_to_use > 1):
-            print("Enter a possible percentage between 0 and 1")
-            return
+            raise ValueError("Percentage should be between 0 and 1")
         elif(int(percent_to_use * len(images)) == 0):
-            print("Percentage is too small for this set")
-            return
+            raise ValueError("Percentage is too small for this set")
         else:
             stop_index = int(len(images)*percent_to_use)
-
+        
 
         # loop inside each category folder with itertools for stoping on a percentage
         for image_index, img in enumerate(itertools.islice(images , 0, stop_index)):
@@ -431,11 +428,9 @@ def create_training_data_yolo(source_path, percent_to_use = 1, validation_split 
 
         # fix possible percentage error
         if(percent_to_use <= 0 or percent_to_use > 1):
-            print("Enter a possible percentage between 0 and 1")
-            return
+            raise ValueError("Percentage should be between 0 and 1")
         elif(int(percent_to_use * len(images)) == 0):
-            print("Percentage is too small for this set")
-            return
+            raise ValueError("Percentage is too small for this set")
         else:
             stop_index = int(len(images)*percent_to_use)
 
@@ -583,7 +578,7 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
             __coords__[1:] = [(x, y)]
             im = image.copy()
             cv2.rectangle(im, __coords__[0], __coords__[1], (255, 0, 0), 2)
-            cv2.imshow("image", im) 
+            cv2.imshow(window_name, im) 
 
         elif event == cv2.EVENT_LBUTTONUP:
             # __coords__.append((x, y))
@@ -599,12 +594,13 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
         elif event == cv2.EVENT_RBUTTONDOWN:
             pass
 
-    # if the las character of the file is not \n appending creates problems
     def __save_annotations_to_file(image_path, yolo_labels_lists, write_mode):
         """
         saves yolo annnotations lists to annotations file list of lists:[[0,1,1,1,1],[1,0,0,0,0]]
         returns annotation_file_path 
         """
+
+        # prepare the annotations
         yolo_labels = []
         for yolo_labels_list in yolo_labels_lists:
             yolo_labels.append("{0} {1:.6} {2:.6} {3:.6} {4:.6}".format(yolo_labels_list[0], yolo_labels_list[1], yolo_labels_list[2], yolo_labels_list[3], yolo_labels_list[4]))
@@ -612,6 +608,13 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
         image_name, image_extension = os.path.splitext(image_path)
         annotation_file_path = "{0}.txt".format(image_name)
 
+        # if last character of the file is not \n we cant append directly we should add another line 
+        # since __write_to_file function writes lists to line inserting an empty string automatically creates a new line
+        temp_file_content = __read_from_file(annotation_file_path)
+        if(temp_file_content[-1][-1] != "\n"):
+            yolo_labels.insert(0,"")
+
+        # write prepared annotations to file
         __write_to_file(yolo_labels, annotation_file_path, write_mode=write_mode)
 
         return annotation_file_path
@@ -663,6 +666,10 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
 
         # draw the rectangles using converted points
         for opencv_point in opencv_points:
+            # give error if an annoted file has impossible class value
+            if(opencv_point[0] > len(class_names)-1):
+                raise ValueError("this image file has an annotation that has bigger class number than current selected class file") 
+
             cv2.rectangle(image, (opencv_point[1], opencv_point[2]), (opencv_point[3], opencv_point[4]), (0,200,100), 2)
             cv2.line(image, (opencv_point[1], opencv_point[2]), (opencv_point[3], opencv_point[4]), (255, 0, 0), 1) 
             cv2.putText(image, "{0}".format(class_names[opencv_point[0]]), (opencv_point[1], opencv_point[2]), cv2.FONT_HERSHEY_SIMPLEX, 1.5, color=(0, 0, 0), thickness=2)
@@ -690,33 +697,36 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
 
     points = []
     image_index = 0
+    label_temp = 0
     global __drawing__
     __drawing__ = False
+    window_name = "Yolo annotation tool"
+
 
     # create window and set it up
-    cv2.namedWindow("image")
-    cv2.moveWindow("image", 40,30)
-    cv2.setMouseCallback("image", __draw_rectangle_on_mouse_drag,image)
-    cv2.createTrackbar('label', "image", 0, len(class_names)-1, __on__trackbar_change)
+    cv2.namedWindow(window_name)
+    cv2.moveWindow(window_name, 40,30)
+    cv2.setMouseCallback(window_name, __draw_rectangle_on_mouse_drag,image)
+    cv2.createTrackbar('label', window_name, 0, len(class_names)-1, __on__trackbar_change)
     image = __refresh_image(image_index, 0)
 
-
-    label_temp = 0
     # gui loop
     while(True):
 
-        label = cv2.getTrackbarPos('label', "image")
+        label = cv2.getTrackbarPos('label', window_name)
         
         # bu ne salak yontem lan kafan mi iyidi yaparken
         if(label != label_temp):
             image = __refresh_image(image_index, label)
             label_temp = label
 
+        # dont refresh the original frame while drawing
         if(not __drawing__):
-            cv2.imshow("image", image)  
+            cv2.imshow(window_name, image)  
         
         key = cv2.waitKey(30)
         
+
 
         # save selected annotations to a file
         if(key == ord("s")):
@@ -733,7 +743,8 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
                 image = __refresh_image(image_index, label)
                 points = []
 
-                print("image coordinates:{0} yolo points{1}".format(points,yolo_labels_lists))
+                print("annotation saved {1}".format(yolo_labels_lists))
+
 
 
         # move backward
@@ -779,6 +790,12 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
             image = __refresh_image(image_index, label)        
             points = []
 
+
+        # if window is closed break this has to be after waitkey
+        if (cv2.getWindowProperty(window_name, 0) < 0):
+            # cv2.destroyAllWindows()
+            break
+
         # quit on esc
         if(key == 27):
             break
@@ -814,8 +831,8 @@ def create_cfg_file_yolo(save_path, classes, batch=64, sub=8, width=416, height=
     yolo_cfg_template_path = os.path.join("imagepreprocessing","cfg_file_templates", "yolo-obj.cfg")
 
     if not os.path.exists(yolo_cfg_template_path):
-        print("yolo_cfg_template not found")
-        return
+        raise IOError("yolo_cfg_template not found")
+
 
     # read cfg template
     yolo_cfg_template = __read_from_file(yolo_cfg_template_path)
@@ -895,8 +912,7 @@ def train_test_split(train_x, train_y, test_size=0.2, save_path=None):
     test_y = []
 
     if(len(train_x) != len(train_y)):
-        print("x and y sizes does not match")
-        return
+        raise ValueError("x and y sizes does not match")
     
     data_count = len(train_x)
     train_percent = int((data_count * test_size))
@@ -1004,7 +1020,7 @@ def create_confusion_matrix(predictions, actual_values, class_names=None, one_ho
 
 
 
-# decrypted
+# deprecated
 def __create_training_data_yolo(source_path, save_path = "data/obj/", percent_to_use = 1, validation_split = 0.2, rename_duplicates = False, shuffle = True, files_to_exclude = [".DS_Store","data","train.txt","test.txt","obj.names","obj.data"]):
     """
     Creates train ready data for yolo, labels all the images by center automatically
