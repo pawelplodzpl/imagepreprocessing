@@ -643,7 +643,7 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
         else:
             return None
 
-    def __draw_annotations_to_image(image_path, class_names):
+    def __draw_bounding_boxes_to_image(image_path, class_names):
         """
         draw annotations if file is exists
         """
@@ -681,7 +681,7 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
         if annotation file exists draw the rectangles resize and return the image if not just return the resized image
         also draw information to the image
         """
-        image, annoted_object_count = __draw_annotations_to_image(images[image_index], class_names)
+        image, annoted_object_count = __draw_bounding_boxes_to_image(images[image_index], class_names)
         if(image is None):
             image = cv2.imread(images[image_index])
         # image = __resize_with_aspect_ratio(image, max_windows_size[0], max_windows_size[1])
@@ -885,6 +885,85 @@ def make_prediction_from_directory_yolo(images_path, darknet_path, save_path = "
         print("File name: {0} - {1}/{2}".format(image, index+1, image_count), end="\r")
 
     print("\nAll images saved to {0}".format(save_path))
+
+
+def draw_bounding_boxes(images_path_file, class_names_file, save_path = "annoted_images", annotations_file = None):
+    """
+    Draws bounding boxes of images
+
+    # input
+    images_path_file: a file that consists of image paths
+    class_names_file: class names for bounding boxes
+    save_path:("annoted_images") save path of the new images
+    """
+    import cv2
+    import numpy as np
+
+    image_paths = __read_from_file(images_path_file)
+    image_paths = image_paths.split()
+    
+    class_names = __read_from_file(class_names_file)
+    class_names = class_names.split()
+    
+    # make the dir
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+
+    for image_path in image_paths:
+
+        image = cv2.imread(image_path)
+
+        # set up save loaction and get annotation file
+        image_name, image_extension = os.path.splitext(image_path)
+        new_file_name = "{0}(objects){1}".format(image_name, image_extension)
+        new_file_save_path = os.path.join(save_path, os.path.basename(new_file_name))
+        annotation_file_path = "{0}.txt".format(image_name)
+
+        # parse annotation file
+        if(not annotations_file):
+            if os.path.exists(annotation_file_path):
+                annotations = __read_from_file(annotation_file_path)
+                annotations = annotations.split("\n")
+                annotations = filter(None, annotations)  # delete empty lists 
+                annotations = [annotation.split() for annotation in annotations]
+                # convert annotations to float and label to int
+                # yolo annotation structure: (0 0.8 0.8 0.5 0.5)
+                for annotation in annotations:
+                    annotation[0] = int(annotation[0])
+                    annotation[1] = float(annotation[1])
+                    annotation[2] = float(annotation[2])
+                    annotation[3] = float(annotation[3])
+                    annotation[4] = float(annotation[4])
+            else:
+                continue
+            
+        else:
+            # TODO  annotations_file parser
+            pass
+        
+
+
+         # get dimensions of image
+        image_height = np.size(image, 0)
+        image_width = np.size(image, 1)
+
+        # convert points
+        opencv_points = __convert_annotations_yolo_to_opencv(image_width, image_height, annotations)
+
+        # draw the rectangles using converted points
+        for opencv_point in opencv_points:
+            # give error if an annoted file has impossible class value
+            if(opencv_point[0] > len(class_names)-1):
+                raise ValueError("this image file has an annotation that has bigger class number than current selected class file") 
+
+            cv2.rectangle(image, (opencv_point[1], opencv_point[2]), (opencv_point[3], opencv_point[4]), (0,200,100), 2)
+            cv2.line(image, (opencv_point[1], opencv_point[2]), (opencv_point[3], opencv_point[4]), (255, 0, 0), 1) 
+            cv2.putText(image, "{0}".format(class_names[opencv_point[0]]), (opencv_point[1], opencv_point[2]), cv2.FONT_HERSHEY_SIMPLEX, 1.5, color=(0, 0, 0), thickness=2)
+            
+        
+        cv2.imwrite(new_file_save_path, image)
+        
+        print("Image saved: {0}".format(new_file_save_path))
 
 
 

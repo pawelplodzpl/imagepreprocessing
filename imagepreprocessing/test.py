@@ -1,4 +1,4 @@
-from imagepreprocessing import create_training_data_keras, make_prediction_from_directory_keras, make_prediction_from_array_keras, create_training_data_yolo, yolo_annotation_tool, create_cfg_file_yolo, make_prediction_from_directory_yolo, create_confusion_matrix, train_test_split
+from imagepreprocessing import create_training_data_keras, make_prediction_from_directory_keras, make_prediction_from_array_keras, create_training_data_yolo, yolo_annotation_tool, draw_bounding_boxes,create_cfg_file_yolo, make_prediction_from_directory_yolo, create_confusion_matrix, train_test_split
 
 # source_path = "C:\\Users\\can\\ProjectDependencies\\datasets\\deep_learning\\food-101\\only3"
 save_path = "C:\\Users\\can\\Desktop\\food"
@@ -11,7 +11,9 @@ class_names = ["elma","ayva","armut"]
 source_path = "C:\\Users\\can\\Desktop\\cat"
 
 
-yolo_annotation_tool("test_stuff\\images", "test_stuff\\obj.names")
+# yolo_annotation_tool("test_stuff\\images", "test_stuff\\obj.names")
+
+draw_bounding_boxes("test_stuff\\img_pats.txt", "test_stuff\\obj.names", save_path="test_stuff\\annoted_images")
 
 
 # auto creates random annotations for all images it needs 4 values (smallest_center, biggest_center, smallest_dimension, biggest_dimension) ex:(0.4,0.6,0.8,0.9)
