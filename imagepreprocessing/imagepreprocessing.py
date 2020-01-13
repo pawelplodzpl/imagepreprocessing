@@ -743,7 +743,7 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
                 image = __refresh_image(image_index, label)
                 points = []
 
-                print("annotation saved {1}".format(yolo_labels_lists))
+                print("annotation saved {0}".format(yolo_labels_lists))
 
 
 
@@ -887,7 +887,7 @@ def make_prediction_from_directory_yolo(images_path, darknet_path, save_path = "
     print("\nAll images saved to {0}".format(save_path))
 
 
-def draw_bounding_boxes(images_path_file, class_names_file, save_path = "annoted_images", annotations_file = None):
+def draw_bounding_boxes(images_path_file, class_names_file, save_path = "annoted_images"):
     """
     Draws bounding boxes of images
 
@@ -920,29 +920,23 @@ def draw_bounding_boxes(images_path_file, class_names_file, save_path = "annoted
         annotation_file_path = "{0}.txt".format(image_name)
 
         # parse annotation file
-        if(not annotations_file):
-            if os.path.exists(annotation_file_path):
-                annotations = __read_from_file(annotation_file_path)
-                annotations = annotations.split("\n")
-                annotations = filter(None, annotations)  # delete empty lists 
-                annotations = [annotation.split() for annotation in annotations]
-                # convert annotations to float and label to int
-                # yolo annotation structure: (0 0.8 0.8 0.5 0.5)
-                for annotation in annotations:
-                    annotation[0] = int(annotation[0])
-                    annotation[1] = float(annotation[1])
-                    annotation[2] = float(annotation[2])
-                    annotation[3] = float(annotation[3])
-                    annotation[4] = float(annotation[4])
-            else:
-                continue
-            
-        else:
-            # TODO  annotations_file parser
-            pass
         
-
-
+        if os.path.exists(annotation_file_path):
+            annotations = __read_from_file(annotation_file_path)
+            annotations = annotations.split("\n")
+            annotations = filter(None, annotations)  # delete empty lists 
+            annotations = [annotation.split() for annotation in annotations]
+            # convert annotations to float and label to int
+            # yolo annotation structure: (0 0.8 0.8 0.5 0.5)
+            for annotation in annotations:
+                annotation[0] = int(annotation[0])
+                annotation[1] = float(annotation[1])
+                annotation[2] = float(annotation[2])
+                annotation[3] = float(annotation[3])
+                annotation[4] = float(annotation[4])
+        else:
+            continue
+            
          # get dimensions of image
         image_height = np.size(image, 0)
         image_width = np.size(image, 1)

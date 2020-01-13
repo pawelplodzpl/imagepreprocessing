@@ -11,9 +11,9 @@ class_names = ["elma","ayva","armut"]
 source_path = "C:\\Users\\can\\Desktop\\cat"
 
 
-# yolo_annotation_tool("test_stuff\\images", "test_stuff\\obj.names")
+yolo_annotation_tool("test_stuff\\images", "test_stuff\\obj.names")
 
-draw_bounding_boxes("test_stuff\\img_pats.txt", "test_stuff\\obj.names", save_path="test_stuff\\annoted_images")
+# draw_bounding_boxes("test_stuff\\img_pats.txt", "test_stuff\\obj.names", save_path="test_stuff\\annoted_images")
 
 
 # auto creates random annotations for all images it needs 4 values (smallest_center, biggest_center, smallest_dimension, biggest_dimension) ex:(0.4,0.6,0.8,0.9)
