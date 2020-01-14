@@ -1,2 +1,3 @@
-C:\Users\can\Desktop\yolo_annotation_convert\images\a.jpeg
-C:\Users\can\Desktop\yolo_annotation_convert\images\b.jpeg
+C:\Users\can\PROJECTS\PythonProjects\imagepreprocessing\test_stuff\images\a.jpg
+C:\Users\can\PROJECTS\PythonProjects\imagepreprocessing\test_stuff\images\b.jpg
+C:\Users\can\PROJECTS\PythonProjects\imagepreprocessing\test_stuff\images\aa.jpg

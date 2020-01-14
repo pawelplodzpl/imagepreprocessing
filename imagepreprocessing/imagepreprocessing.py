@@ -359,7 +359,7 @@ def create_training_data_yolo(source_path, percent_to_use = 1, validation_split 
     Creates required training files for yolo 
 
     # Arguments:
-        source_path: source path of the images see input format
+        source_path: source path of the images see input format (source folder name of the images will be used to create paths see output format)
         percent_to_use (1): percentage of data that will be used
         validation_split (0.2): splits validation data with given percentage give 0 if you don't want validation split
         create_cfg_file (True): creates a cfg file with default options for yolov3
@@ -383,7 +383,7 @@ def create_training_data_yolo(source_path, percent_to_use = 1, validation_split 
 
     # Output format:
         /some_dir
-        train.txt --> data/obj/class1/img1.jpg
+        train.txt --> data/your_source_folder_name/class1/img1.jpg
         test.txt   
         obj.data
         obj.names                
@@ -399,15 +399,17 @@ def create_training_data_yolo(source_path, percent_to_use = 1, validation_split 
         if exclude in CATEGORIES: 
             CATEGORIES.remove(exclude)
     
+    source_folder = os.path.basename(source_path)
+
     # change path seperator if needed
-    save_path = "data/obj/".replace("/",train_machine_path_sep)
+    save_path = "data/{0}/".format(source_folder).replace("/",train_machine_path_sep)
 
     # prepare obj.data
     objdata = []
     objdata.append("classes = {0}".format(len(CATEGORIES)))
-    objdata.append("train  = data/train.txt".replace("/",train_machine_path_sep))
-    objdata.append("valid  = data/test.txt".replace("/",train_machine_path_sep))
-    objdata.append("names = data/obj.names".replace("/",train_machine_path_sep))
+    objdata.append("train  = data/{0}/train.txt".format(source_folder).replace("/",train_machine_path_sep))
+    objdata.append("valid  = data/{0}/test.txt".format(source_folder).replace("/",train_machine_path_sep))
+    objdata.append("names = data/{0}/obj.names".format(source_folder).replace("/",train_machine_path_sep))
     objdata.append("backup = backup")
 
 
@@ -494,7 +496,7 @@ def create_training_data_yolo(source_path, percent_to_use = 1, validation_split 
     print("\n")
 
     if(create_cfg_file):
-        create_cfg_file_yolo(source_path, number_of_categories, batch=64, sub=8, width=416, height=416)
+        create_cfg_file_yolo(source_path, number_of_categories, batch=64, sub=16, width=416, height=416)
 
     print("file saved -> {0}\nfile saved -> {1}\nfile saved -> {2}\nfile saved -> {3}".format("train.txt", "test.txt","obj.names","obj.data"))
 
@@ -611,8 +613,9 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
         # if last character of the file is not \n we cant append directly we should add another line 
         # since __write_to_file function writes lists to line inserting an empty string automatically creates a new line
         temp_file_content = __read_from_file(annotation_file_path)
-        if(temp_file_content[-1][-1] != "\n"):
-            yolo_labels.insert(0,"")
+        if(temp_file_content):
+            if(temp_file_content[-1][-1] != "\n"):
+                yolo_labels.insert(0,"")
 
         # write prepared annotations to file
         __write_to_file(yolo_labels, annotation_file_path, write_mode=write_mode)
@@ -668,7 +671,7 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
         for opencv_point in opencv_points:
             # give error if an annoted file has impossible class value
             if(opencv_point[0] > len(class_names)-1):
-                raise ValueError("this image file has an annotation that has bigger class number than current selected class file") 
+                raise ValueError("this txt file has an annotation that has bigger class number than current selected class file") 
 
             cv2.rectangle(image, (opencv_point[1], opencv_point[2]), (opencv_point[3], opencv_point[4]), (0,200,100), 2)
             cv2.line(image, (opencv_point[1], opencv_point[2]), (opencv_point[3], opencv_point[4]), (255, 0, 0), 1) 
@@ -805,7 +808,7 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
 
 
 
-def create_cfg_file_yolo(save_path, classes, batch=64, sub=8, width=416, height=416):
+def create_cfg_file_yolo(save_path, classes, batch=64, sub=16, width=416, height=416):
     """
     creates config file with default options for yolo3
 

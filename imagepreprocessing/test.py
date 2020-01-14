@@ -1,6 +1,6 @@
 from imagepreprocessing import create_training_data_keras, make_prediction_from_directory_keras, make_prediction_from_array_keras, create_training_data_yolo, yolo_annotation_tool, draw_bounding_boxes,create_cfg_file_yolo, make_prediction_from_directory_yolo, create_confusion_matrix, train_test_split
 
-# source_path = "C:\\Users\\can\\ProjectDependencies\\datasets\\deep_learning\\food-101\\only3"
+source_path = "C:\\Users\\can\\ProjectDependencies\\datasets\\deep_learning\\food-101\\flowers"
 save_path = "C:\\Users\\can\\Desktop\\food"
 
 images_path = "C:\\Users\\can\\PROJECTS\\PythonProjects\\deep_learning\\test_images\\food2"
@@ -8,7 +8,6 @@ model_path = "C:\\Users\\can\\PROJECTS\\PythonProjects\\deep_learning\\saved_mod
 
 class_names = ["elma","ayva","armut"]
 
-source_path = "C:\\Users\\can\\Desktop\\cat"
 
 
 yolo_annotation_tool("test_stuff\\images", "test_stuff\\obj.names")
@@ -21,7 +20,7 @@ yolo_annotation_tool("test_stuff\\images", "test_stuff\\obj.names")
 # if your dataset is cropped and all of your objects at the center (0.4,0.6,0.8,0.9) this mostly works fine 
 
 
-# create_training_data_yolo(source_path, train_machine_path_sep = "/", percent_to_use = 1, validation_split = 0.2, create_cfg_file = True)
+# create_training_data_yolo(source_path, train_machine_path_sep = "/", percent_to_use = 1, auto_label_by_center=(0.4,0.6,0.8,0.9),validation_split = 0.2, create_cfg_file = True)
 
 
 # create_cfg_file_yolo("C:\\Users\\can\\Desktop", 50, batch=64, sub=8, width=416, height=416)
