@@ -7,10 +7,13 @@ from shutil import copyfile
 # from .file_operations import __read_from_file, __write_to_file
 # from .convert_annotations import __convert_annotations_opencv_to_yolo, __convert_annotations_yolo_to_opencv
 # from .other_fuctions import __run_shell_command
+# from .cfg_templates import __get_cfg_template
+
 
 from file_operations import __read_from_file, __write_to_file
 from convert_annotations import __convert_annotations_opencv_to_yolo, __convert_annotations_yolo_to_opencv
 from other_fuctions import __run_shell_command
+from cfg_templates import __get_cfg_template
 
  
 
@@ -831,14 +834,8 @@ def create_cfg_file_yolo(save_path, classes, batch=64, sub=16, width=416, height
     if(width%32 != 0 or height%32 != 0):
         raise ValueError("height and width must be divisible by 32") 
 
-    yolo_cfg_template_path = os.path.join("imagepreprocessing","cfg_file_templates", "yolo-obj.cfg")
-
-    if not os.path.exists(yolo_cfg_template_path):
-        raise IOError("yolo_cfg_template not found")
-
-
-    # read cfg template
-    yolo_cfg_template = __read_from_file(yolo_cfg_template_path)
+    # get template
+    yolo_cfg_template = __get_cfg_template("yolo_cfg_template")
 
     # set up parameters
     if(classes == 1):
