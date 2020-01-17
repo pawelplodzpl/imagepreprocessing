@@ -692,6 +692,9 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
             image = cv2.imread(images[image_index])
         # image = __resize_with_aspect_ratio(image, max_windows_size[0], max_windows_size[1])
         image = cv2.resize(image, max_windows_size)
+
+        if(annoted_object_count == 0):
+            __save_annotations_to_file(images[image_index], [], "w")
         
         # show some info with puttext
         cv2.putText(image, "{0}/{1} objects:{2} label: {3}".format(len(images), image_index+1, annoted_object_count, class_names[label]), (0, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color=(0, 200, 100), thickness=2)
@@ -779,9 +782,9 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
                 image =__refresh_image(image_index, label)
                 points = []
 
-                # if file is empty delete it
-                if(len(yolo_labels_lists) == 0):
-                    os.remove(annotation_file_path)
+                # # if file is empty delete it
+                # if(len(yolo_labels_lists) == 0):
+                #     os.remove(annotation_file_path)
 
         # refresh current image
         if(key == ord("r")):
@@ -790,9 +793,7 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
 
         # clear annotations
         if(key == ord("c")):
-            image_name, image_extension = os.path.splitext(images[image_index])
-            annotation_file_path = "{0}.txt".format(image_name)
-            os.remove(annotation_file_path)
+            __save_annotations_to_file(images[image_index], [], "w")
             image = __refresh_image(image_index, label)        
             points = []
 
