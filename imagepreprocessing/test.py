@@ -10,7 +10,10 @@ class_names = ["elma","ayva","armut"]
 
 
 
-yolo_annotation_tool("test_stuff\\images", "test_stuff\\obj.names")
+# yolo_annotation_tool("test_stuff\\images", "test_stuff\\obj.names")
+
+# yolo_annotation_tool("\\Users\\can\\Desktop\\yolo_context_test_trafic_sign\\trafic_sign_elle_montaj\\Train", "\\Users\\can\\Desktop\\yolo_context_test_trafic_sign\\trafic_sign_elle_montaj\\obj.names")
+
 
 # draw_bounding_boxes("test_stuff\\img_pats.txt", "test_stuff\\obj.names", save_path="test_stuff\\annoted_images")
 
