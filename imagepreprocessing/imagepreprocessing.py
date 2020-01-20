@@ -357,7 +357,7 @@ def make_prediction_from_array_keras(test_x, keras_model_path, print_output=True
 
 # yolo functions
 
-def create_training_data_yolo(source_path, percent_to_use = 1, validation_split = 0.2, create_cfg_file=True, auto_label_by_center = None, train_machine_path_sep = "/", shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data","yolo-obj.cfg"]):
+def create_training_data_yolo(source_path, percent_to_use = 1, validation_split = 0.2, create_cfg_file=True, train_machine_path_sep = "/", shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data","yolo-obj.cfg"]):
     """
     Creates required training files for yolo 
 
@@ -445,29 +445,6 @@ def create_training_data_yolo(source_path, percent_to_use = 1, validation_split 
 
             # percent info
             print("File name: {} - {}/{}  Image:{}/{}".format(category, index_of_category+1, number_of_categories, image_index+1, stop_index), end="\r")
-
-
-            # if auto_label_by_center is True create label files and label images by the image center
-            if(auto_label_by_center):
-                if(len(auto_label_by_center) != 4):
-                    raise ValueError("4 values needed for random annotations '{0}' is given".format(len(auto_label_by_center)))
-                for label in auto_label_by_center:
-                    if(label < 0 or label > 1):
-                        raise ValueError("labels has to be between 0 and 1 '{0}' is given".format(label))
-
-                c1 = random.uniform(auto_label_by_center[0], auto_label_by_center[1])
-                c2 = random.uniform(auto_label_by_center[0], auto_label_by_center[1])
-                
-                w = random.uniform(auto_label_by_center[2], auto_label_by_center[3])
-                h = random.uniform(auto_label_by_center[2], auto_label_by_center[3])
-                
-                yolo_labels = "{0} {1} {2} {3} {4}".format(category_index, c1,c2, w, h)
-                
-                basename, extension = os.path.splitext(img)
-                txtname = basename + ".txt"
-                abs_save_path = os.path.join(path, txtname)
-        
-                __write_to_file([yolo_labels], file_name = abs_save_path, write_mode="w")
 
             # using save_path's last character (data/obj/ or data\\obj\\) to separete inner paths so if operating system is different inner paths will be matches 
             img_and_path = save_path + category + save_path[-1] + img
@@ -960,6 +937,52 @@ def draw_bounding_boxes(images_path_file, class_names_file, save_path = "annoted
         cv2.imwrite(new_file_save_path, image)
         
         print("Image saved: {0}".format(new_file_save_path))
+
+
+def auto_annotation_by_random_points(images_path, class_of_images, annotation_points=(0.4,0.6,0.8,0.9), files_to_exclude = [".DS_Store"]):
+    """
+    # auto creates random annotations for all images it needs 4 values (smallest_center, biggest_center, smallest_dimension, biggest_dimension) ex:(0.4,0.6,0.8,0.9)
+    # values should be between 0 and 1 
+    """
+
+    images = os.listdir(images_path)
+
+    # remove excluded files
+    for exclude in files_to_exclude:
+        if exclude in images: 
+            images.remove(exclude)
+    
+    # exclude possible annotation files
+    for image in images:
+        if ".txt" in image: 
+            images.remove(image)
+
+    # loop inside each category folder   itertools for stoping on a percentage
+    for image_index, img in enumerate(images):
+
+        # percent info
+        print("Image:{}/{}".format(image_index+1, len(images)), end="\r")
+
+        # annote images
+        if(len(annotation_points) != 4):
+            raise ValueError("4 values needed for random annotations '{0}' is given".format(len(annotation_points)))
+        for label in annotation_points:
+            if(label < 0 or label > 1):
+                raise ValueError("labels has to be between 0 and 1 '{0}' is given".format(label))
+
+        c1 = random.uniform(annotation_points[0], annotation_points[1])
+        c2 = random.uniform(annotation_points[0], annotation_points[1])
+        
+        w = random.uniform(annotation_points[2], annotation_points[3])
+        h = random.uniform(annotation_points[2], annotation_points[3])
+        
+        yolo_labels = "{0} {1} {2} {3} {4}".format(class_of_images, c1,c2, w, h)
+        
+        basename, extension = os.path.splitext(img)
+        txtname = basename + ".txt"
+        abs_save_path = os.path.join(images_path, txtname)
+
+        __write_to_file([yolo_labels], file_name = abs_save_path, write_mode="w")
 
 
 
