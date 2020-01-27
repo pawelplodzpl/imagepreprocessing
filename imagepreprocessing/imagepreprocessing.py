@@ -90,14 +90,28 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
             CATEGORIES.remove(exclude)
     
 
+
     # loop in the main directory
     for category_index, category in enumerate(CATEGORIES):
 
         path = os.path.join(source_path, category)
         number_of_categories = len(CATEGORIES)
         index_of_category = CATEGORIES.index(category)
-        images = os.listdir(path)
 
+        # if wrong directory style given raise error
+        try:
+            images = os.listdir(path)
+        except NotADirectoryError as e:
+            raise NotADirectoryError(e,"""
+        Your dataset should look like this
+        /source_path
+        |---/dir1(class1)
+            |---img1.jpg
+            |---img2.jpg
+        |---/dir2(class2)
+            |---img1.jpg
+            ... 
+        """)
 
         # fix possible percentage errors
         if(validation_split < 0 or validation_split > 1):
