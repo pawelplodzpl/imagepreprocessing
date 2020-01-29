@@ -1,6 +1,8 @@
 from imagepreprocessing import create_training_data_keras, make_prediction_from_directory_keras, make_prediction_from_array_keras, create_training_data_yolo, yolo_annotation_tool, draw_bounding_boxes,create_cfg_file_yolo, make_prediction_from_directory_yolo, create_confusion_matrix, train_test_split, auto_annotation_by_random_points
 
-source_path = "C:\\Users\\can\\ProjectDependencies\\datasets\\deep_learning\\17flowers\\jpg\\0"
+source_path = "C:\\Users\\can\\ProjectDependencies\\datasets\\deep_learning\\17flowers\\jpg"
+# source_path = "\\Users\can\\ProjectDependencies\\datasets\\deep_learning\\catdog_data\\PetImages"
+
 save_path = "C:\\Users\\can\\Desktop\\food"
 
 images_path = "C:\\Users\\can\\PROJECTS\\PythonProjects\\deep_learning\\test_images\\food2"
@@ -9,7 +11,9 @@ model_path = "C:\\Users\\can\\PROJECTS\\PythonProjects\\deep_learning\\saved_mod
 class_names = ["elma","ayva","armut"]
 
 
-create_training_data_keras(source_path)
+
+create_training_data_keras(source_path,grayscale=False,image_size=(224),normalize=255,validation_split=0.2,convert_array_and_reshape=True,percent_to_use=1)
+
 
 
 # auto_annotation_by_random_points("C:\\Users\\can\\Desktop\\0",1)

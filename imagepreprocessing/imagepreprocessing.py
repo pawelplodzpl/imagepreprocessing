@@ -20,7 +20,7 @@ from cfg_templates import __get_cfg_template
 
 # keras functions
 
-def create_training_data_keras(source_path, save_path = None, img_size = 224, percent_to_use = 1, validation_split = 0, grayscale = False, one_hot = True, shuffle = True, numpy_array = True, files_to_exclude = [".DS_Store",""]):
+def create_training_data_keras(source_path, save_path = None, image_size = (224,224), percent_to_use = 1, validation_split = 0, normalize = 255, grayscale = False, one_hot = True, shuffle = True, convert_array_and_reshape = True, files_to_exclude = [".DS_Store",""]):
     """
     Creates train ready data for classification from image data
     Takes all the image directories alphabetically in a main directory 
@@ -28,13 +28,14 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
     # Arguments:
         source_path: source path of the images see input format
         save_path (None): save path for clean training data 
-        img_size (224): size of the images for resizing
+        image_size ((224,224)): size of the images for resizing tuple of 2 ints or a single int
         percent_to_use (1): percentage of data that will be used
         validation_split (0.2): splits validation data with given percentage give 0 if you don't want validation split
+        normalize (255): (pass None or False if you don't want normalization) divides all images by 255 this normalizes images if pixel values are maximum of 255 if it is different change this value   
         grayscale (False): converts images to grayscale
         one_hot (True): makes one hot encoded y train if True if not uses class indexes as labels
         shuffle (True): shuffle the data
-        numpy_array (True): converts list to numpy array if True
+        convert_array_and_reshape (True): converts list to numpy array and reshapes images at the and if True
         files_to_exclude ([".DS_Store",""]): list of file names to exclude in the image directory (can be hidden files)
 
     # Returns:
@@ -69,12 +70,36 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
         ``python
             source_path = "C:\\Users\\can\\datasets\\deep_learning\\food-101\\only3"
             save_path = "C:\\Users\\can\\Desktop\\food10class1000sampleeach"
-            create_training_data_keras(source_path, save_path, img_size = 299, validation_split=0.1, percent_to_use=0.1, grayscale = True, files_to_exclude=["excludemoe","hi.txt"])
+            create_training_data_keras(source_path, save_path, image_size = 299, validation_split=0.1, percent_to_use=0.1, grayscale = True, files_to_exclude=["excludemoe","hi.txt"])
         ``                      
     """
 
     import numpy as np
     import cv2
+
+    # image_size parsing
+    if(type(image_size) == tuple):
+        if(len(image_size) == 2 and type(image_size[0]) == int and type(image_size[1]) == int):
+            img_width = image_size[0]
+            img_height = image_size[1]
+        else:
+            raise ValueError("image_size tuple should have 2 int values")
+    elif(type(image_size) == int):
+        img_width = image_size
+        img_height = image_size
+    else:
+        raise ValueError("image_size should be an int or a tuple with 2 int values")
+
+    if(img_width < 1 or img_height < 1):
+        raise ValueError("image_size should be bigger than 0")
+
+
+    # raise error on wrong percentage
+    if(validation_split < 0 or validation_split > 1):
+        raise ValueError("Validation_split should be between 0 and 1")
+
+    
+
 
     x = []
     y = [] 
@@ -113,23 +138,21 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
             ... 
         """)
 
-        # fix possible percentage errors
-        if(validation_split < 0 or validation_split > 1):
-            raise ValueError("Validation_split should be between 0 and 1")
-
+        # raise error on wrong percentage
         if(percent_to_use <= 0 or percent_to_use > 1):
             raise ValueError("Percentage should be between 0 and 1")
         elif(int(percent_to_use * len(images)) == 0):
-            raise ValueError("Percentage is too small for this set")
+            raise ValueError("Percentage is too small for this directory {0}".format(category))
         else:
             stop_index = int(len(images)*percent_to_use)
         
-
+        
+        is_there_broken_images = ""
         # loop inside each category folder with itertools for stoping on a percentage
         for image_index, img in enumerate(itertools.islice(images , 0, stop_index)):
 
             # print percent info
-            print("File name: {} - {}/{}  Image:{}/{}".format(category, index_of_category+1, number_of_categories, image_index+1, stop_index), end="\r")
+            print("File name: {0} - {1}/{2}  Image:{3}/{4} {5}".format(category, index_of_category+1, number_of_categories, image_index+1, stop_index, is_there_broken_images), end="\r")
             
             # there can be broken images
             try:
@@ -140,7 +163,7 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
                     temp_array = cv2.imread(os.path.join(path, img)) 
 
                 # resize image
-                img_array = cv2.resize(temp_array, (img_size, img_size))   
+                img_array = cv2.resize(temp_array, (img_width, img_height))   
 
                 # one hot encoding
                 if(one_hot):  
@@ -157,22 +180,24 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
 
                 x.append(img_array)
             except:
+                is_there_broken_images = " ---There are some corrupted images in this directory, skiping those images---"
                 pass
 
         print("")
 
 
     if(shuffle):
+        print("\n...shuffling...")
         xy = list(zip(x,y))
         random.shuffle(xy)
         x, y = list(zip(*xy))
     
 
     # validation split
-    if(validation_split != 0):
+    if(validation_split):
+        print("\n...splitting validation...")
         if(int(validation_split * len(images)) == 0):
-            print("Validation split is too small for this set")
-            return
+            raise ValueError("Validation split is too small for this set")
 
         # split
         train_percent = int(len(x) - (validation_split * len(x)))
@@ -181,27 +206,51 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
         x = x[:train_percent]
         y = y[:train_percent]
 
-        print("\nvalidation x: {0} validation y: {1}".format(len(x_val),len(y_val)))
+        print("train x: {0} train y: {1}\nvalidation x: {2} validation y: {3}".format(len(x),len(y),len(x_val),len(y_val)))
+    else:
+        print("\ntrain x: {0} train y: {1}".format(len(x),len(y)))
 
-    print("train x: {0} train y: {1}\n".format(len(x),len(y)))
 
-    # array conversion
-    if(numpy_array):
+
+    # convert array and reshape 
+    if(convert_array_and_reshape):
+        print("\n...converting train to array...")
         if(grayscale):
             third_dimension = 1
         else:
             third_dimension = 3
     
-        x = np.array(x).reshape(-1, img_size, img_size, third_dimension)
+        x = np.array(x).reshape(-1, img_width, img_height, third_dimension)
         y = np.array(y)
 
-        print("shape of train x: {0}\nshape of train y: {1}".format(x.shape,y.shape))
+        print("Array converted shape of train x: {0}\nArray converted shape of train y: {1}".format(x.shape,y.shape))
 
-        if(validation_split != 0):
-            x_val = np.array(x_val).reshape(-1, img_size, img_size, third_dimension)
+        if(validation_split):
+            print("\n...converting validation to array...")
+            x_val = np.array(x_val).reshape(-1, img_width, img_height, third_dimension)
             y_val = np.array(y_val)    
-            print("shape of validation x: {0}\nshape of validation y: {1}".format(x_val.shape,y_val.shape))
-    
+            print("Array converted shape of validation x: {0}\nArray converted shape of validation y: {1}".format(x_val.shape,y_val.shape))
+
+
+    # normalize 
+    if(normalize):
+        if(convert_array_and_reshape):
+            print("\n...normalizing train x...")
+            x = x/normalize
+            print("Normalized example from train set (x[0][0][0]): {0}".format(x[0][0][0]))
+            if(validation_split):
+                print("\n...normalizing validation x...")
+                x_val = x_val/normalize
+                print("Normalized example from validation set (x_val[0][0][0]): {0}".format(x_val[0][0][0]))
+        else:
+            print("\n...normalizing train x (if normalization is slow use convert_array_and_reshape with normalization)...")
+            x = (np.array(x)/normalize).tolist()
+            print("Normalized example from train set (x[0][0][0]): {0}".format(x[0][0][0]))
+            if(validation_split):
+                print("\n...normalizing validation x...")
+                x_val = (np.array(x_val)/normalize).tolist()
+                print("Normalized example from validation set (x_val[0][0][0]): {0}".format(x_val[0][0][0]))
+
 
     # save
     if(save_path != None):
@@ -228,7 +277,7 @@ def create_training_data_keras(source_path, save_path = None, img_size = 224, pe
         return x, y
 
 
-def make_prediction_from_directory_keras(images_path, keras_model_path, image_size = 224, print_output=True, model_summary=True, show_images=False, grayscale = False, files_to_exclude = [".DS_Store",""]):
+def make_prediction_from_directory_keras(images_path, keras_model_path, image_size = (224,224), print_output=True, model_summary=True, show_images=False, grayscale = False, files_to_exclude = [".DS_Store",""]):
     """
     Reads test data from directory resizes it and makes prediction with using a keras model
 
@@ -261,6 +310,20 @@ def make_prediction_from_directory_keras(images_path, keras_model_path, image_si
     import keras
     import cv2
 
+    # image_size parsing
+    if(type(image_size) == tuple):
+        if(len(image_size) == 2 and type(image_size[0]) == int and type(image_size[1]) == int):
+            img_width = image_size[0]
+            img_height = image_size[1]
+        else:
+            raise ValueError("image_size tuple should have 2 int values")
+    elif(type(image_size) == int):
+        img_width = image_size
+        img_height = image_size
+    else:
+        raise ValueError("image_size should be an int or a tuple with 2 int values")
+
+
     test_images = []
     test_image_names = []
 
@@ -287,8 +350,8 @@ def make_prediction_from_directory_keras(images_path, keras_model_path, image_si
                 third_dimension = 3
                 img_array = cv2.imread(abs_path)
 
-            new_array = cv2.resize(img_array, (image_size, image_size))
-            test_images.append(new_array.reshape(-1, image_size, image_size, third_dimension))    
+            new_array = cv2.resize(img_array, (img_width, img_height))
+            test_images.append(new_array.reshape(-1, img_width, img_height, third_dimension))    
             test_image_names.append(image)
         except:
             pass

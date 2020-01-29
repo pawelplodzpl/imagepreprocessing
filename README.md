@@ -22,7 +22,7 @@ from imagepreprocessing import create_training_data_keras, create_training_data_
 ```python
 source_path = "datasets/deep_learning/food-101/only3"
 save_path = "food10class1000sampleeach"
-create_training_data_keras(source_path, save_path, img_size = 299, validation_split=0.1, percent_to_use=0.1, grayscale = True, files_to_exclude=["excludemoe","hi.txt"])
+create_training_data_keras(source_path, save_path, image_size = 299, validation_split=0.1, percent_to_use=0.1, grayscale = True, files_to_exclude=["excludemoe","hi.txt"])
 ```
 ```
 File name: apple_pie - 1/3  Image:100/100
