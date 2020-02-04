@@ -411,22 +411,47 @@ def make_prediction_from_array_keras(test_x, keras_model_path, print_output=True
     if(model_summary):
         model.summary()
 
+    
+    if(type(test_x) == list):
+        multi_input_model = True
+    else:
+        multi_input_model = False
+
+    # add an extra dimension to array since we are iterating over the array the first dimension is disapeares
+    if(multi_input_model):
+        print("...multi input received reshapeing...")
+        new_x = []
+        for i in range(test_x[0].shape[0]):
+            temp = []
+            for test_arr in test_x:
+                temp.append(np.expand_dims(test_arr[i], axis=0))
+            new_x.append(temp)
+        test_x = new_x
+    else:
+        new_x = []
+        for image in test_x:
+            new_x.append(np.expand_dims(image, axis=0))
+        test_x = new_x
+
     predictions = []
-
     for index, image in enumerate(test_x):
-
-        # add an extra dimension to array since we are iterating over the array the first dimension is disapeares
-        new_image = np.expand_dims(image, axis=0)
-        prediction = model.predict(new_image)
+        prediction = model.predict(image)
         prediction_class = np.argmax(prediction)
         predictions.append(prediction_class)
+
         if(print_output):
-            print("{0} : {1}".format(index, prediction_class))
+            print("{0}/{1} -> {2}".format(len(test_x), index, prediction_class))
+        else:
+            print("{0}/{1}".format(len(test_x),index),end="\r")
 
         if(show_images):
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            imgplot = plt.imshow(image)
-            plt.show()
+            try:
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                imgplot = plt.imshow(image)
+                plt.show()
+            except TypeError  as e:
+                raise TypeError(e,"""
+            input array is not representable as image try with option show_images=False""")
 
     return predictions
 
