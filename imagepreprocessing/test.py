@@ -12,13 +12,13 @@ class_names = ["elma","ayva","armut"]
 
 
 
-create_training_data_keras(source_path,grayscale=False,image_size=(224),normalize=255,validation_split=0.2,convert_array_and_reshape=True,percent_to_use=1)
+# create_training_data_keras(source_path,grayscale=False,image_size=(224),normalize=255,validation_split=0.2,convert_array_and_reshape=True,percent_to_use=1)
 
 
 
 # auto_annotation_by_random_points("C:\\Users\\can\\Desktop\\0",1)
 
-# yolo_annotation_tool("test_stuff\\images", "test_stuff\\obj.names")
+yolo_annotation_tool("test_stuff\\images", "test_stuff\\obj.names")
 
 # yolo_annotation_tool("\\Users\\can\\Desktop\\yolo_context_test_trafic_sign\\trafic_sign_elle_montaj\\Train", "\\Users\\can\\Desktop\\yolo_context_test_trafic_sign\\trafic_sign_elle_montaj\\obj.names")
 
