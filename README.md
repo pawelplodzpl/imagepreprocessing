@@ -110,20 +110,16 @@ create_confusion_matrix(predictions, test_y, class_names=["0","1","2","3","4","5
 from imagepreprocessing.darknet_functions import create_training_data_yolo, auto_annotation_by_random_points
 import os
 
-
 main_dir = "30_class/train_30_class"
-exclude = ["obj.data", "obj.names", "train.txt", "test.txt", "yolo-obj.cfg"]
 
-# creating required files
-create_training_data_yolo(main_dir)
-
-# auto annotating all images by their center points 
+# auto annotating all images by their center points (x,y,w,h)
 # (it is only possible to make classification this way for detection you have to annotate images by hand)
 folders = sorted(os.listdir(main_dir))
 for index, folder in enumerate(folders):
-    if(folder not in exclude):
-        auto_annotation_by_random_points(os.path.join(main_dir, folder), index, annotation_points=(0.5,0.5,1,1))
+    auto_annotation_by_random_points(os.path.join(main_dir, folder), index, annotation_points=((0.5,0.5), (0.5,0.5), (1.0,1.0), (1.0,1.0)))
 
+# creating required files
+create_training_data_yolo(main_dir)
 ```
 
 ## Annotation tool
