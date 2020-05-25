@@ -65,12 +65,12 @@ def create_training_data_yolo(source_path, yolo_version=3, percent_to_use = 1, v
     # check yolo version
     if(yolo_version == 3):
         train_info = "Download darknet53.conv.74 and move it to darknets root directory.(there are download links on https://github.com/AlexeyAB/darknet)\nRun the command below in the darknets root directory to start training."
-        train_command1 = "Your train command with map is: ./darknet detector train data/{0}/obj.data data/yolo-custom.cfg darknet53.conv.74 -map".format(source_folder)
-        train_command2 = "Your train command for multi gpu is: ./darknet detector train data/{0}/obj.data data/yolo-custom.cfg darknet53.conv.74 -gpus 0,1 -map".format(source_folder)
+        train_command1 = "Your train command with map is: ./darknet detector train data/{0}/obj.data data/{0}/yolo-custom.cfg darknet53.conv.74 -map".format(source_folder)
+        train_command2 = "Your train command for multi gpu is: ./darknet detector train data/{0}/obj.data data/{0}/yolo-custom.cfg darknet53.conv.74 -gpus 0,1 -map".format(source_folder)
     elif(yolo_version == 4):
         train_info = "Download yolov4.conv.137 and move it to darknets root directory.(there are download links on https://github.com/AlexeyAB/darknet)\nRun the command below in the darknets root directory to start training."
-        train_command1 = "Your train command with map is: ./darknet detector train data/{0}/obj.data data/yolo-custom.cfg yolov4.conv.137 -map".format(source_folder)
-        train_command2 = "Your train command for multi gpu is: ./darknet detector train data/{0}/obj.data data/yolo-custom.cfg yolov4.conv.137 -gpus 0,1 -map".format(source_folder)
+        train_command1 = "Your train command with map is: ./darknet detector train data/{0}/obj.data data/{0}/yolo-custom.cfg yolov4.conv.137 -map".format(source_folder)
+        train_command2 = "Your train command for multi gpu is: ./darknet detector train data/{0}/obj.data data/{0}/yolo-custom.cfg yolov4.conv.137 -gpus 0,1 -map".format(source_folder)
     else:
         raise ValueError("unsupported yolo version")
 
