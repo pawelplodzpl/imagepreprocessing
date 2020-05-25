@@ -13,19 +13,20 @@ from imagepreprocessing.cfg_templates import __get_cfg_template
 
 # yolo functions
 
-def create_training_data_yolo(source_path, percent_to_use = 1, validation_split = 0.2, create_cfg_file=True, train_machine_path_sep = "/", shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data","yolo-obj.cfg"]):
+def create_training_data_yolo(source_path, yolo_version=3, percent_to_use = 1, validation_split = 0.2, create_cfg_file=True, train_machine_path_sep = "/", shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data","yolo-obj.cfg","yolo-custom.cfg"]):
     """
     Creates required training files for yolo 
 
     # Arguments:
         source_path: source path of the images see input format (source folder name of the images will be used to create paths see output format)
+        yoo_version: (3) yolo version 3 or 4 
         percent_to_use (1): percentage of data that will be used
         validation_split (0.2): splits validation data with given percentage give 0 if you don't want validation split
         create_cfg_file (True): creates a cfg file with default options for yolov3
         auto_label_by_center (False): creates label txt files for all images labels images by their center automatically (use it if all of your datasets images are centered)
         train_machine_path_sep ("/"): if you are going to use a windows machine for training change this  
         shuffle (True): shuffle the paths
-        files_to_exclude ([".DS_Store","train.txt","test.txt","obj.names","obj.data","yolo-obj.cfg"]): list of file names to exclude in the image directory (can be hidden files)
+        files_to_exclude ([".DS_Store","train.txt","test.txt","obj.names","obj.data","yolo-obj.cfg","yolo-custom.cfg"]): list of file names to exclude in the image directory (can be hidden files)
 
     # Save:
         Creates train.txt and test.txt files
@@ -59,6 +60,20 @@ def create_training_data_yolo(source_path, percent_to_use = 1, validation_split 
             CATEGORIES.remove(exclude)
     
     source_folder = os.path.basename(source_path)
+
+
+    # check yolo version
+    if(yolo_version == 3):
+        train_info = "Download darknet53.conv.74 and move it to darknets root directory.(there are download links on https://github.com/AlexeyAB/darknet)\nRun the command below in the darknets root directory to start training."
+        train_command1 = "Your train command with map is: ./darknet detector train data/{0}/obj.data data/yolo-custom.cfg darknet53.conv.74 -map".format(source_folder)
+        train_command2 = "Your train command for multi gpu is: ./darknet detector train data/{0}/obj.data data/yolo-custom.cfg darknet53.conv.74 -gpus 0,1 -map".format(source_folder)
+    elif(yolo_version == 4):
+        train_info = "Download yolov4.conv.137 and move it to darknets root directory.(there are download links on https://github.com/AlexeyAB/darknet)\nRun the command below in the darknets root directory to start training."
+        train_command1 = "Your train command with map is: ./darknet detector train data/{0}/obj.data data/yolo-custom.cfg yolov4.conv.137 -map".format(source_folder)
+        train_command2 = "Your train command for multi gpu is: ./darknet detector train data/{0}/obj.data data/yolo-custom.cfg yolov4.conv.137 -gpus 0,1 -map".format(source_folder)
+    else:
+        raise ValueError("unsupported yolo version")
+
 
     # change path seperator if needed
     save_path = "data/{0}/".format(source_folder).replace("/",train_machine_path_sep)
@@ -130,12 +145,16 @@ def create_training_data_yolo(source_path, percent_to_use = 1, validation_split 
     print("\n")
 
     if(create_cfg_file):
-        create_cfg_file_yolo(source_path, number_of_categories, batch=64, sub=16, width=416, height=416)
+        create_cfg_file_yolo(source_path, number_of_categories, yolo_version=yolo_version, batch=64, sub=16, width=416, height=416)
 
-    print("file saved -> {0}\nfile saved -> {1}\nfile saved -> {2}\nfile saved -> {3}".format("train.txt", "test.txt","obj.names","obj.data"))
+    print("file saved -> {0}\nfile saved -> {1}\nfile saved -> {2}\nfile saved -> {3}\n".format("train.txt", "test.txt","obj.names","obj.data"))
+    print(train_info)
+    print(train_command1)
+    print(train_command2)
+    print()
 
 
-def create_cfg_file_yolo(save_path, classes, batch=64, sub=16, width=416, height=416):
+def create_cfg_file_yolo(save_path, classes, yolo_version=3, batch=64, sub=16, width=416, height=416):
     """
     creates config file with default options for yolo3
 
@@ -152,6 +171,8 @@ def create_cfg_file_yolo(save_path, classes, batch=64, sub=16, width=416, height
     # 8 filters before yolo layers (classes+5)*3
     """
     
+    cfg_file_name = "yolo-custom.cfg"
+
     if(classes < 1):
         raise ValueError("class count can't be smaller than 1") 
 
@@ -159,7 +180,12 @@ def create_cfg_file_yolo(save_path, classes, batch=64, sub=16, width=416, height
         raise ValueError("height and width must be divisible by 32") 
 
     # get template
-    yolo_cfg_template = __get_cfg_template("yolo_cfg_template")
+    if(yolo_version == 3):
+        yolo_cfg_template = __get_cfg_template("yolov3_cfg_template")
+    elif(yolo_version == 4):
+        yolo_cfg_template = __get_cfg_template("yolov4_cfg_template")
+    else:
+        raise ValueError("unsupported yolo version") 
 
     # set up parameters
     if(classes == 1):
@@ -175,9 +201,9 @@ def create_cfg_file_yolo(save_path, classes, batch=64, sub=16, width=416, height
     yolo_cfg_template = yolo_cfg_template.format(batch,sub,width,height,max_batches,steps1,steps2,classes,filters)
 
     # save cfg to save path
-    __write_to_file([yolo_cfg_template], os.path.join(save_path, "yolo-obj.cfg"), write_mode="w")
+    __write_to_file([yolo_cfg_template], os.path.join(save_path, cfg_file_name), write_mode="w")
 
-    print("file saved -> {0}".format("yolo-obj.cfg"))
+    print("file saved -> {0}".format(cfg_file_name))
 
 
 def auto_annotation_by_random_points(images_path, class_of_images, annotation_points=((0.5,0.5), (0.5,0.5), (1.0,1.0), (1.0,1.0)), files_to_exclude = [".DS_Store"]):
