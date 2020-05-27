@@ -48,7 +48,6 @@ from  imagepreprocessing.utilities import create_confusion_matrix, train_test_sp
 
 images_path = "deep_learning/test_images/food2"
 save_path = "food"
-model_path = "deep_learning/saved_models/alexnet.h5"
 
 # Create training data split the data
 x, y, x_val, y_val = create_training_data_keras(images_path, save_path = save_path, validation_split=0.2, percent_to_use=0.5)
@@ -63,7 +62,7 @@ x, y, test_x, test_y =  train_test_split(x,y,save_path = save_path)
 class_names = ["apple", "melon", "orange"]
 
 # make prediction
-predictions = make_prediction_from_array_keras(test_x, model_path, print_output=False)
+predictions = make_prediction_from_array_keras(test_x, model, print_output=False)
 
 # create confusion matrix
 create_confusion_matrix(predictions, test_y, class_names=class_names, one_hot=True)

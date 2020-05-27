@@ -265,13 +265,13 @@ def create_training_data_keras(source_path, save_path = None, image_size = (224,
         return x, y
 
 
-def make_prediction_from_directory_keras(images_path, keras_model_path, image_size = (224,224), print_output=True, model_summary=True, show_images=False, grayscale = False, files_to_exclude = [".DS_Store",""]):
+def make_prediction_from_directory_keras(images_path, keras_model, image_size = (224,224), print_output=True, model_summary=True, show_images=False, grayscale = False, files_to_exclude = [".DS_Store",""]):
     """
     Reads test data from directory resizes it and makes prediction with using a keras model
 
     # Arguments:
         images_path: source path of the test images see input format
-        keras_model_path: path of the keras model 
+        keras_model: a keras model object or path of the model 
         img_size (224): size of the images for resizing
         print_output (True): prints output
         model_summary (True): shows keras model summary 
@@ -323,8 +323,11 @@ def make_prediction_from_directory_keras(images_path, keras_model_path, image_si
         if exclude in images: 
             images.remove(exclude)
 
-    # load model
-    model = keras.models.load_model(keras_model_path)
+    # prepare model
+    if(isinstance(keras_model, keras.Model)):
+        model = keras_model
+    else:
+        model = keras.models.load_model(keras_model)
 
     # get all images
     for image in images:
@@ -367,13 +370,13 @@ def make_prediction_from_directory_keras(images_path, keras_model_path, image_si
     return predictions
 
 
-def make_prediction_from_array_keras(test_x, keras_model_path, print_output=True, model_summary=True, show_images=False):
+def make_prediction_from_array_keras(test_x, keras_model, print_output=True, model_summary=True, show_images=False):
     """
     makes prediction with using a keras model
 
     # Arguments:
         test_x: numpy array of images
-        keras_model_path: path of the keras model
+        keras_model: a keras model object or path of the model
         print_output (True): prints output
         model_summary (True): shows keras model summary 
         show_images (False): shows the predicted image
@@ -392,8 +395,11 @@ def make_prediction_from_array_keras(test_x, keras_model_path, print_output=True
     import keras
     import cv2
 
-    # load model
-    model = keras.models.load_model(keras_model_path)
+    # prepare model
+    if(isinstance(keras_model, keras.Model)):
+        model = keras_model
+    else:
+        model = keras.models.load_model(keras_model)
 
     # show model summary
     if(model_summary):
