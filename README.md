@@ -1,56 +1,69 @@
-## imagepreprocessing
+# imagepreprocessing
+##### A small library for speeding up the dataset preparation and model testing steps for deep learning on various frameworks. (mostly for me)
+___
 
+![](https://img.shields.io/pypi/dw/imagepreprocessing?style=flat-square)  ![](https://img.shields.io/github/repo-size/cccaaannn/imagepreprocessing?style=flat-square) ![](https://img.shields.io/github/license/cccaaannn/imagepreprocessing?style=flat-square)
+
+## What can it do
+- **Creates all the required files for darknet-yolo3,4 training including cfg file with default parameters and class calculations in a single line [darknet](https://github.com/AlexeyAB/darknet)**
 - **Creates train ready data for image classification tasks for keras in a single line**
 - **Makes multiple image prediction process easier with using keras model from both array and directory**
-
-- **Creates required files for darknet-yolo including cfg file with default parameters and class count calculations in a single line**
 - **Predicts and saves multiple images on a directory with using darknet**
-- **Annotation tool for yolo**
+- **Includes an nnotation tool for darknet-yolo**
 - **Auto annotation by given random points for yolo**
-- **Draw bounding boxes of the images from annotation files that formatted for yolo**
-
+- **Draw bounding boxes of the images from annotation files for preview**
 - **Plots confusion matrix**
 
+### This dataset structure is required for most of the operations 
+```
+my_dataset
+   ├───class1
+   |     ├───image1.jpg
+   |     ├───image2.jpg
+   |     ├───image3.jpg
+   |     ...
+   ├───class2
+   └───class3
+         ...
+```
 
 ## Install
 ```sh
 pip install imagepreprocessing
 ```
 
+## Create required files for training on darknet-yolo  
+```python
+from imagepreprocessing.darknet_functions import create_training_data_yolo
+main_dir = "datasets/my_dataset"
+create_training_data_yolo(main_dir)
+```
+
 ## Create training data for keras
 ```python
 from  imagepreprocessing.keras_functions import create_training_data_keras
-source_path = "datasets/deep_learning/food-101/only3"
-save_path = "food10class1000sampleeach"
-create_training_data_keras(source_path, save_path, image_size = 299, validation_split=0.1, percent_to_use=0.1, grayscale = True)
+source_path = "datasets/my_dataset"
+save_path = "5000images_on_one_file"
+train_x, train_y, valid_x, valid_y = create_training_data_keras(source_path, save_path = save_path, image_size = (299,299), validation_split=0.1, percent_to_use=0.5, grayscale = True)
 ```
 
-## Make prediction from directory with a keras model and plot confusion matrix
+
+## Make multiple image predictions from directory with keras model
 ```python
 from  imagepreprocessing.keras_functions import make_prediction_from_directory_keras
-from  imagepreprocessing.utilities import create_confusion_matrix
-
-images_path = "deep_learning/test_images/food2"
-model_path = "deep_learning/saved_models/alexnet.h5"
-
-predictions = make_prediction_from_directory_keras(images_path, model_path)
-
-class_names = ["apple", "melon", "orange"]
-labels = [0,0,0,1,1,1,2,2,2]
-create_confusion_matrix(predictions, labels, class_names=class_names)
+predictions = make_prediction_from_directory_keras("datasets/my_dataset/class1", "models/alexnet.h5")
 ```
 
 
-## Make prediction and create the confusion matrix
+## Make prediction from test array and create the confusion matrix with keras model
 ```python
 from  imagepreprocessing.keras_functions import create_training_data_keras, make_prediction_from_array_keras
 from  imagepreprocessing.utilities import create_confusion_matrix, train_test_split
 
-images_path = "deep_learning/test_images/food2"
-save_path = "food"
+images_path = "datasets/my_dataset"
 
 # Create training data split the data
-x, y, x_val, y_val = create_training_data_keras(images_path, save_path = save_path, validation_split=0.2, percent_to_use=0.5)
+x, y, x_val, y_val = create_training_data_keras(images_path, save_path = None, validation_split=0.2, percent_to_use=0.5)
 
 # split training data
 x, y, test_x, test_y =  train_test_split(x,y,save_path = save_path)
@@ -76,7 +89,7 @@ from  imagepreprocessing.utilities import create_confusion_matrix, train_test_sp
 import numpy as np
 
 # Create training data split the data and split the data
-source_path = "/content/trainingSet"
+source_path = "datasets/my_dataset"
 x, y = create_training_data_keras(source_path, image_size=(28,28), validation_split=0, percent_to_use=1, grayscale=True, convert_array_and_reshape=False)
 x, y, test_x, test_y = train_test_split(x,y)
 
@@ -96,7 +109,7 @@ test_x = [test_x1, test_x2]
 # ...
 
 # make prediction
-predictions = make_prediction_from_array_keras(test_x, "models/model.h5",print_output=False, model_summary=False, show_images=False)
+predictions = make_prediction_from_array_keras(test_x, model, print_output=False, model_summary=False, show_images=False)
 
 # create confusion matrix
 create_confusion_matrix(predictions, test_y, class_names=["0","1","2","3","4","5","6","7","8","9"], one_hot=True)
@@ -104,15 +117,16 @@ create_confusion_matrix(predictions, test_y, class_names=["0","1","2","3","4","5
 ```
 
 
-## Create required files for training on darknet-yolo and auto annotate images by center
+## Create required files for training on darknet-yolo and auto annotate images by center 
+##### Auto annotation is for testing the dataset or just for using it for classification, detection won't work without proper annotations.
+#
 ```python
 from imagepreprocessing.darknet_functions import create_training_data_yolo, auto_annotation_by_random_points
 import os
 
-main_dir = "30_class/train_30_class"
+main_dir = "datasets/my_dataset"
 
 # auto annotating all images by their center points (x,y,w,h)
-# (it is only possible to make classification this way for detection you have to annotate images by hand)
 folders = sorted(os.listdir(main_dir))
 for index, folder in enumerate(folders):
     auto_annotation_by_random_points(os.path.join(main_dir, folder), index, annotation_points=((0.5,0.5), (0.5,0.5), (1.0,1.0), (1.0,1.0)))
@@ -121,7 +135,8 @@ for index, folder in enumerate(folders):
 create_training_data_yolo(main_dir)
 ```
 
-## Annotation tool
+
+## Annotation tool for derknet-yolo
 ```python
 from imagepreprocessing.darknet_functions import yolo_annotation_tool
 yolo_annotation_tool("test_stuff/images", "test_stuff/obj.names")
