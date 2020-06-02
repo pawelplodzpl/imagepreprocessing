@@ -2,7 +2,8 @@
 ##### A small library for speeding up the dataset preparation and model testing steps for deep learning on various frameworks. (mostly for me)
 ___
 
-![](https://img.shields.io/pypi/dw/imagepreprocessing?style=flat-square)  ![](https://img.shields.io/github/repo-size/cccaaannn/imagepreprocessing?style=flat-square) ![](https://img.shields.io/github/license/cccaaannn/imagepreprocessing?style=flat-square)
+[![PyPI version fury.io](https://img.shields.io/pypi/v/imagepreprocessing?style=flat-square)](https://pypi.python.org/pypi/imagepreprocessing/) [![PyPI download month](https://img.shields.io/pypi/dw/imagepreprocessing?style=flat-square)](https://pypi.python.org/pypi/imagepreprocessing/) [![Downloads](https://pepy.tech/badge/imagepreprocessing)](https://pepy.tech/project/imagepreprocessing) 
+![](https://img.shields.io/github/repo-size/cccaaannn/imagepreprocessing?style=flat-square) [![GitHub license](https://img.shields.io/github/license/cccaaannn/imagepreprocessing?style=flat-square)](https://github.com/cccaaannn/imagepreprocessing/blob/master/LICENSE)
 
 ## What can it do
 - **Creates all the required files for darknet-yolo3,4 training including cfg file with default parameters and class calculations in a single line [darknet](https://github.com/AlexeyAB/darknet)**
@@ -119,7 +120,6 @@ create_confusion_matrix(predictions, test_y, class_names=["0","1","2","3","4","5
 
 ## Create required files for training on darknet-yolo and auto annotate images by center 
 ##### Auto annotation is for testing the dataset or just for using it for classification, detection won't work without proper annotations.
-#
 ```python
 from imagepreprocessing.darknet_functions import create_training_data_yolo, auto_annotation_by_random_points
 import os
@@ -141,6 +141,3 @@ create_training_data_yolo(main_dir)
 from imagepreprocessing.darknet_functions import yolo_annotation_tool
 yolo_annotation_tool("test_stuff/images", "test_stuff/obj.names")
 ```
-
-
-
