@@ -4,7 +4,7 @@ import pickle
 import itertools 
 from shutil import copyfile
 
-from imagepreprocessing.file_operations import __read_from_file, __write_to_file
+from imagepreprocessing.internal_functions.file_operations import __read_from_file, __write_to_file
 
 # keras functions
 
@@ -448,3 +448,84 @@ def make_prediction_from_array_keras(test_x, keras_model, print_output=True, mod
             input array is not representable as image try with option show_images=False""")
 
     return predictions
+
+
+def create_history_graph_keras(history, title = "Training History", show = True, separate_train_val_plots=True, colors = {"train_accuracy":"blue", "train_loss":"orange", "val_accuracy":"green", "val_loss":"red"}):
+    """
+    # Arguments:
+        history: keras history object
+        title ("Training History"): plot title
+        show (True): show the plot
+        separate_plots (True): creates seperate plots for training an validation data
+        colors ({train_accuracy:"blue", train_loss:"orange", val_accuracy:"green", val_loss:"red"}): plot colors
+
+    # Returns:
+        matplotlib Axes object
+    """
+    import matplotlib.pyplot as plt
+    
+    is_validation_exists = False
+
+    if("acc" in history.history):
+        train_accuracy = history.history['acc']
+    elif("accuracy" in history.history):
+        train_accuracy = history.history['accuracy']
+    else:
+        raise ValueError("could not found accuracy value inside history object")
+
+    if("loss" in history.history):
+        train_loss = history.history['loss']
+    else:
+        raise ValueError("could not found loss value inside history object")
+
+    if("val_acc" in history.history):
+        val_accuracy = history.history['val_acc']
+        is_validation_exists = True
+    elif("val_accuracy" in history.history):
+        val_accuracy = history.history['val_accuracy']
+        is_validation_exists = True
+
+    if("val_loss" in history.history):
+        val_loss = history.history['val_loss']
+
+
+    epochs_nr = range(len(train_accuracy))
+
+    # create plots
+    if(separate_train_val_plots and is_validation_exists):
+        _, ax = plt.subplots(2)
+        
+        ax[0].plot(epochs_nr, train_accuracy, color=colors["train_accuracy"],  label='Training accuracy')
+        ax[0].plot(epochs_nr, train_loss, color=colors["train_loss"], label='Training loss')
+
+        if(is_validation_exists):
+            ax[1].plot(epochs_nr, val_accuracy, color=colors["val_accuracy"],  label='Validation accuracy')
+            ax[1].plot(epochs_nr, val_loss, color=colors["val_loss"], label='Validation loss')
+
+        # set options
+        for a in ax:
+            a.legend(prop={'size': 7})
+            a.set_xlabel('epochs')
+            a.grid()
+    else:
+        _, ax = plt.subplots()
+        
+        ax.plot(epochs_nr, train_accuracy, color=colors["train_accuracy"],  label='Training accuracy')
+        ax.plot(epochs_nr, train_loss, color=colors["train_loss"], label='Training loss')
+
+        if(is_validation_exists):
+            ax.plot(epochs_nr, val_accuracy, color=colors["val_accuracy"],  label='Validation accuracy')
+            ax.plot(epochs_nr, val_loss, color=colors["val_loss"], label='Validation loss')
+        
+        # set options
+        ax.legend(prop={'size': 7})
+        ax.set_xlabel('epochs')
+        ax.grid()
+
+    
+    plt.suptitle(title)
+
+    if(show):
+        plt.show()
+
+    return ax

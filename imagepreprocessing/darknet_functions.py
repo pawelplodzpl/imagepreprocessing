@@ -5,10 +5,10 @@ import itertools
 from shutil import copyfile
 
 
-from imagepreprocessing.file_operations import __read_from_file, __write_to_file
-from imagepreprocessing.convert_annotations import __convert_annotations_opencv_to_yolo, __convert_annotations_yolo_to_opencv
-from imagepreprocessing.other_functions import __run_shell_command
-from imagepreprocessing.cfg_templates import __get_cfg_template
+from imagepreprocessing.internal_functions.file_operations import __read_from_file, __write_to_file
+from imagepreprocessing.internal_functions.convert_annotations import __convert_annotations_opencv_to_yolo, __convert_annotations_yolo_to_opencv
+from imagepreprocessing.internal_functions.other_functions import __run_shell_command
+from imagepreprocessing.internal_functions.cfg_templates import __get_cfg_template
 
 
 # yolo functions

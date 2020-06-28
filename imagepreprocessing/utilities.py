@@ -2,7 +2,7 @@ import os
 import pickle
 import itertools 
 
-from imagepreprocessing.file_operations import __read_from_file, __write_to_file
+from imagepreprocessing.internal_functions.file_operations import __read_from_file, __write_to_file
 
 # utilities
 def train_test_split(train_x, train_y, test_size=0.2, save_path=None):
@@ -62,7 +62,7 @@ def train_test_split(train_x, train_y, test_size=0.2, save_path=None):
     return new_train_x, new_train_y, test_x, test_y
 
 
-def create_confusion_matrix(predictions, actual_values, class_names=None, one_hot=False, normalize=False):
+def create_confusion_matrix2(predictions, actual_values, class_names=None, one_hot=False, normalize=False, cmap_color="Greens"):
     """ 
     Creates a confusion matrix
 
@@ -72,6 +72,7 @@ def create_confusion_matrix(predictions, actual_values, class_names=None, one_ho
         class_names (None): names of classes that will be drawn, if you want only the array and not the plot pass None (matplotlib required)
         one_hot (False): if labels are one hot formatted use this
         normalize (False): normalizes the values of the matrix
+        cmap_color (Greens): matplotlib cmap as string
 
     # Retruns:
         A numpy array of confusion matrix 
@@ -105,7 +106,7 @@ def create_confusion_matrix(predictions, actual_values, class_names=None, one_ho
         import matplotlib.pyplot as plt
 
         title='Confusion matrix'
-        cmap=plt.cm.Blues
+        cmap = plt.cm.get_cmap(cmap_color)
 
         plt.imshow(cnf_matrix, interpolation='nearest', cmap=cmap)
         plt.title(title)
