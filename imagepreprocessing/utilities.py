@@ -2,7 +2,7 @@ import os
 import pickle
 import itertools 
 
-from imagepreprocessing.internal_functions.file_operations import __read_from_file, __write_to_file
+from imagepreprocessing.__file_operations import __read_from_file, __write_to_file
 
 # utilities
 def train_test_split(train_x, train_y, test_size=0.2, save_path=None):
@@ -62,7 +62,7 @@ def train_test_split(train_x, train_y, test_size=0.2, save_path=None):
     return new_train_x, new_train_y, test_x, test_y
 
 
-def create_confusion_matrix2(predictions, actual_values, class_names=None, one_hot=False, normalize=False, cmap_color="Greens"):
+def create_confusion_matrix(predictions, actual_values, class_names=None, one_hot=False, normalize=False, cmap_color="Greens"):
     """ 
     Creates a confusion matrix
 

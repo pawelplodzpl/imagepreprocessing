@@ -4,7 +4,7 @@ import pickle
 import itertools 
 from shutil import copyfile
 
-from imagepreprocessing.internal_functions.file_operations import __read_from_file, __write_to_file
+from imagepreprocessing.__file_operations import __read_from_file, __write_to_file
 
 # keras functions
 
