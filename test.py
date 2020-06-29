@@ -9,7 +9,7 @@ source_path = "test_stuff/test_datasets/food_5class"
 
 # create_training_data_yolo("test_stuff/test_datasets/food_5class", yolo_version=4, train_machine_path_sep = "/", percent_to_use = 1 ,validation_split = 0.2, create_cfg_file = True)
 
-# yolo_annotation_tool("test_stuff/test_datasets/food_5class/apple_pie", "test_stuff/obj.names")
+# yolo_annotation_tool("test_stuff/images", "test_stuff/obj.names")
 
 # auto_annotation_by_random_points("test_stuff/test_datasets/food_5class/apple_pie",1)
 

@@ -7,14 +7,14 @@ ___
 
 ## What can it do
 - **Creates all the required files for [darknet-yolo3,4](https://github.com/AlexeyAB/darknet) training including cfg file with default parameters and class calculations in a single line. ([example usage](#Create-required-files-for-training-on-darknet-yolo ))**
-- **Creates train ready data for image classification tasks for keras in a single line.([example usage](#Create-training-data-for-keras))**
-- **Makes multiple image prediction process easier with using keras model from both array and directory.**
-- **Predicts and saves multiple images on a directory with using darknet.**
+- **Creates train ready data for image classification tasks for keras in a single line. ([example usage](#Create-training-data-for-keras))**
+- **Makes multiple image prediction process easier with using keras model from both array and directory.([example usage](#Predict-all-images-in-a-directory-with-keras-model))**
+- **Predicts and saves multiple images from a directory with using darknet. ([example usage](#Predict-all-images-in-a-directory-with-yolo-model))**
 - **Includes a simple annotation tool for darknet-yolo style annotation. ([example usage](#Annotation-tool-for-derknet-yolo))**
-- **Auto annotation by given random points for yolo.([example usage](#Create-required-files-for-training-on-darknet-yolo-and-auto-annotate-images-by-center ))**
+- **Auto annotation by given random points for yolo. ([example usage](#Create-required-files-for-training-on-darknet-yolo-and-auto-annotate-images-by-center ))**
 - **Draws bounding boxes of the images from annotation files for preview.**
-- **Plots training history graph from keras history object.([example usage](#Create-training-history-graph-for-keras))**
-- **Plots confusion matrix.([example usage](#Make-prediction-from-test-array-and-create-the-confusion-matrix-with-keras-model))**
+- **Plots training history graph from keras history object. ([example usage](#Create-training-history-graph-for-keras))**
+- **Plots confusion matrix. ([example usage](#Make-prediction-from-test-array-and-create-the-confusion-matrix-with-keras-model))**
 
 ### This dataset structure is required for most of the operations 
 ```
@@ -50,11 +50,22 @@ train_x, train_y, valid_x, valid_y = create_training_data_keras(source_path, sav
 ```
 
 
-## Make multiple image predictions from directory with keras model
+## Predict all images in a directory with keras model
 ```python
 from  imagepreprocessing.keras_functions import make_prediction_from_directory_keras
-predictions = make_prediction_from_directory_keras("datasets/my_dataset/class1", "models/alexnet.h5")
+
+images_path = "datasets/my_dataset/class1"
+
+# give the path
+model = "model.h5"
+
+# or model itself
+# model.fit(...)
+
+# predict
+predictions = make_prediction_from_array_keras(images_path, model, image_size = (224,224), print_output=True, show_images=True)
 ```
+
 
 ## Create training history graph for keras
 ```python
@@ -97,6 +108,48 @@ create_confusion_matrix(predictions, test_y, class_names=class_names, one_hot=Tr
 ![confusion_matrix_example](readme_images/confusion_matrix_example1.png)![confusion_matrix_example](readme_images/confusion_matrix_example2.png)
 
 
+## Annotation tool for derknet-yolo
+```python
+from imagepreprocessing.darknet_functions import yolo_annotation_tool
+yolo_annotation_tool("test_stuff/images", "test_stuff/obj.names")
+```
+<img src="readme_images/annotation_tool_example.png" alt="drawing" width="300"/>
+
+
+## Predict all images in a directory with yolo model 
+##### This function uses shell commands to run darknet so you don't need to compile it as .so file but it is also slow because of that.
+```python
+from imagepreprocessing.darknet_functions import make_prediction_from_directory_yolo
+
+images_path = "datasets/my_dataset/class1"
+darknet_path = "home/user/darknet"
+save_path = "detection_results"
+
+# your command has to have {0} on the position of image path
+darknet_command = "./darknet detector test cfg/coco.data cfg/yolov3.cfg yolov3.weights {0} -dont_show"
+
+make_prediction_from_directory_yolo(images_path, darknet_path, save_path=save_path, darknet_command=darknet_command)
+```
+
+
+## Create required files for training on darknet-yolo and auto annotate images by center 
+##### Auto annotation is for testing the dataset or just for using it for classification, detection won't work without proper annotations.
+```python
+from imagepreprocessing.darknet_functions import create_training_data_yolo, auto_annotation_by_random_points
+import os
+
+main_dir = "datasets/my_dataset"
+
+# auto annotating all images by their center points (x,y,w,h)
+folders = sorted(os.listdir(main_dir))
+for index, folder in enumerate(folders):
+    auto_annotation_by_random_points(os.path.join(main_dir, folder), index, annotation_points=((0.5,0.5), (0.5,0.5), (1.0,1.0), (1.0,1.0)))
+
+# creating required files
+create_training_data_yolo(main_dir)
+```
+
+
 ## Make multi input model prediction and create the confusion matrix
 ```python
 from imagepreprocessing.keras_functions import create_training_data_kera
@@ -129,29 +182,4 @@ predictions = make_prediction_from_array_keras(test_x, model, print_output=False
 # create confusion matrix
 create_confusion_matrix(predictions, test_y, class_names=["0","1","2","3","4","5","6","7","8","9"], one_hot=True)
 
-```
-
-
-## Create required files for training on darknet-yolo and auto annotate images by center 
-##### Auto annotation is for testing the dataset or just for using it for classification, detection won't work without proper annotations.
-```python
-from imagepreprocessing.darknet_functions import create_training_data_yolo, auto_annotation_by_random_points
-import os
-
-main_dir = "datasets/my_dataset"
-
-# auto annotating all images by their center points (x,y,w,h)
-folders = sorted(os.listdir(main_dir))
-for index, folder in enumerate(folders):
-    auto_annotation_by_random_points(os.path.join(main_dir, folder), index, annotation_points=((0.5,0.5), (0.5,0.5), (1.0,1.0), (1.0,1.0)))
-
-# creating required files
-create_training_data_yolo(main_dir)
-```
-
-
-## Annotation tool for derknet-yolo
-```python
-from imagepreprocessing.darknet_functions import yolo_annotation_tool
-yolo_annotation_tool("test_stuff/images", "test_stuff/obj.names")
 ```
