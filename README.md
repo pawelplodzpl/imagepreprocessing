@@ -37,8 +37,28 @@ pip install imagepreprocessing
 ## Create required files for training on darknet-yolo  
 ```python
 from imagepreprocessing.darknet_functions import create_training_data_yolo
-main_dir = "datasets/my_dataset"
+main_dir = "datasets/food_5class"
 create_training_data_yolo(main_dir)
+```
+output
+```
+File name: apple - 1/5  Image:10/10
+File name: melon - 2/5  Image:10/10
+File name: orange - 3/5  Image:10/10
+File name: beef - 4/5  Image:10/10
+File name: bread - 5/5  Image:10/10
+
+file saved -> yolo-custom.cfg
+file saved -> train.txt
+file saved -> test.txt
+file saved -> obj.names
+file saved -> obj.data
+
+Download darknet53.conv.74 and move it to darknets root directory.(there are download links on https://github.com/AlexeyAB/darknet)
+Also move your dataset file to darknet/data/food_5class
+Run the command below in the darknets root directory to start training.
+Your train command with map is: ./darknet detector train data/food_5class/obj.data data/food_5class/yolo-custom.cfg darknet53.conv.74 -map
+Your train command for multi gpu is: ./darknet detector train data/food_5class/obj.data data/food_5class/yolo-custom.cfg darknet53.conv.74 -gpus 0,1 -map
 ```
 
 ## Create training data for keras
@@ -156,6 +176,7 @@ names_path = "datasets/my_dataset/obj.names"
 classes = count_classes_from_annotation_files(class_path, names_path, include_zeros=True)
 print(classes)
 ```
+output
 ```
 {'apple': 3, 'melon': 2, 'orange': 0}
 ```
