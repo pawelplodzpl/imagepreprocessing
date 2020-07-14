@@ -268,11 +268,20 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
     images = os.listdir(images_path)
     images.sort()
 
+
     # remove not included files
-    for image in images:
-        image_name, image_extension = os.path.splitext(image)
-        if image_extension not in image_extensions: 
-            images.remove(image)        
+    # for image in images:
+    #     image_name, image_extension = os.path.splitext(image)
+    #     if image_extension not in image_extensions: 
+    #         images.remove(image)        
+
+    def __filter_function(image):
+        _, image_extension = os.path.splitext(image)
+        if image_extension in image_extensions: 
+            return image
+
+    images = filter(__filter_function, images)        
+
 
     # add paths to images
     images = [os.path.join(images_path, image) for image in images]
@@ -453,7 +462,7 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
     global __drawing__
     __drawing__ = False
     window_name = "Yolo annotation tool"
-
+    image = images[0]
 
     # create window and set it up
     cv2.namedWindow(window_name)
