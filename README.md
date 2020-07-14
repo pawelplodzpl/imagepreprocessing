@@ -149,6 +149,17 @@ for index, folder in enumerate(folders):
 create_training_data_yolo(main_dir)
 ```
 
+## Count class appearances in a directory for annotated yolo data
+```python
+class_path = "datasets/my_dataset/class1"
+names_path = "datasets/my_dataset/obj.names"
+classes = count_classes_from_annotation_files(class_path, names_path, include_zeros=True)
+print(classes)
+```
+```
+{'apple': 3, 'melon': 2, 'orange': 0}
+```
+
 
 ## Make multi input model prediction and create the confusion matrix
 ```python

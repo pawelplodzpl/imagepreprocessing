@@ -1,9 +1,22 @@
-from imagepreprocessing.keras_functions import create_training_data_keras, make_prediction_from_array_keras, make_prediction_from_directory_keras, create_training_data_keras
-from imagepreprocessing.darknet_functions import create_training_data_yolo, create_cfg_file_yolo, yolo_annotation_tool, auto_annotation_by_random_points, draw_bounding_boxes, make_prediction_from_directory_yolo
+from imagepreprocessing.keras_functions import (create_training_data_keras, 
+make_prediction_from_array_keras, 
+make_prediction_from_directory_keras, 
+create_training_data_keras)
+
+
+from imagepreprocessing.darknet_functions import (create_training_data_yolo, 
+create_cfg_file_yolo, 
+yolo_annotation_tool, 
+auto_annotation_by_random_points, 
+draw_bounding_boxes, 
+make_prediction_from_directory_yolo,
+count_classes_from_annotation_files)
+
+
 from imagepreprocessing.utilities import train_test_split, create_confusion_matrix
 
 source_path = "test_stuff/test_datasets/food_5class"
-
+source_path_darknet = "test_stuff/images"
 
 ########## yolo tests ##########
 
@@ -14,6 +27,9 @@ source_path = "test_stuff/test_datasets/food_5class"
 # auto_annotation_by_random_points("test_stuff/test_datasets/food_5class/apple_pie",1)
 
 # draw_bounding_boxes("test_stuff\\img_pats.txt", "test_stuff\\obj.names", save_path="test_stuff\\annoted_images")
+
+# classes = count_classes_from_annotation_files("test_stuff/images", "test_stuff/obj.names", include_zeros=True)
+# print(classes)
 
 
 ########## keras and utilities tests ##########
