@@ -659,7 +659,47 @@ def draw_bounding_boxes(images_path_file, class_names_file, save_path = "annoted
         print("Image saved: {0}".format(new_file_save_path))
 
 
+def count_classes_from_annotation_files(class_path, names_path, include_zeros = False):
+    """
+    Counts individual class appearances in a folder.
 
+    # Arguments:
+        class_path: path of a class folder. (a folder with annotation .txt files)
+        names_path: path of the obj.names file.
+        include_zeros: (False) includes non existing classes to the dictionary.
+    """
+
+    classes = {}
+
+
+    # read files
+    names = __read_from_file(names_path).split()
+    annotation_files = os.listdir(class_path)
+    annotation_files = list(filter(lambda x: x.endswith(".txt"), annotation_files))
+    
+    # include zeros
+    if(include_zeros):
+        for name in names:
+            classes.update({name : 0})          
+
+    for annotation_file in annotation_files:
+        annotations_str = __read_from_file(os.path.join(class_path, annotation_file))
+
+        # split annotations
+        annotations = annotations_str.split("\n")
+        annotations = filter(None, annotations)
+        annotations = [annotation.split(" ") for annotation in annotations]
+
+        # count classes
+        for annotation in annotations:
+            current_class_index = int(annotation[0])
+            current_class_name = names[current_class_index]
+            if(current_class_name in classes):
+                classes.update({current_class_name : classes[current_class_name] + 1})
+            else:
+                classes.update({current_class_name : 1})
+
+    return classes
 
 
 
