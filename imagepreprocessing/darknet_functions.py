@@ -711,7 +711,54 @@ def count_classes_from_annotation_files(class_path, names_path, include_zeros = 
     return classes
 
 
+def remove_class_from_annotation_files(class_path, class_index_to_remove, new_annotations_path = "new_annotations"):
+    """
+    Removes a class and fixes the indexes of all annotation files in a directory
 
+    # Arguments:
+        class_path: path of a class folder. (a folder with annotation .txt files)
+        class_index_to_remove: index of the class which will be removed.
+        new_annotations_path ("new_annotations"): save path for new annotation files. (you can give the same path to override or another path for keeping the original ones)
+    """
+
+    # read and filter annotation files
+    annotation_files = os.listdir(class_path)
+    annotation_files = list(filter(lambda x: x.endswith(".txt"), annotation_files))
+
+    # create new annotations dir if not exists
+    if(not os.path.exists(new_annotations_path)):
+        os.makedirs(new_annotations_path)
+
+    # loop annotation files
+    for annotation_file in annotation_files:
+        annotations_str = __read_from_file(os.path.join(class_path, annotation_file))
+
+        # split annotations
+        annotations = annotations_str.split("\n")
+        annotations = filter(None, annotations)
+        annotations = [annotation.split(" ") for annotation in annotations]
+
+        # create new annotations by decreasing bigger indexes by one
+        new_annotations = []
+        for annotation in annotations:
+            current_class_index = int(annotation[0])
+            if(current_class_index < class_index_to_remove):
+                new_annotations.append(annotation)
+            elif(current_class_index > class_index_to_remove):
+                # temp_annotation = annotation
+                annotation[0] = int(annotation[0]) - 1
+                new_annotations.append(annotation)
+
+        # prepare annotations to write a file
+        write_ready_annotations = []
+        for new_annotation in new_annotations:
+            write_ready_annotations.append("{0} {1} {2} {3} {4}".format(new_annotation[0], new_annotation[1], new_annotation[2], new_annotation[3], new_annotation[4]))
+
+        # new path
+        annotation_path = os.path.join(new_annotations_path, annotation_file)
+
+        # write
+        __write_to_file(write_ready_annotations, annotation_path)
 
 
 
