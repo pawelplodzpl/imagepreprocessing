@@ -10,7 +10,8 @@ yolo_annotation_tool,
 auto_annotation_by_random_points, 
 draw_bounding_boxes, 
 make_prediction_from_directory_yolo,
-count_classes_from_annotation_files)
+count_classes_from_annotation_files,
+remove_class_from_annotation_files)
 
 
 from imagepreprocessing.utilities import train_test_split, create_confusion_matrix
@@ -30,6 +31,8 @@ source_path_darknet = "test_stuff/images"
 
 # classes = count_classes_from_annotation_files("test_stuff/images", "test_stuff/obj.names", include_zeros=True)
 # print(classes)
+
+# remove_class_from_annotation_files("test_stuff/images", 2)
 
 
 ########## keras and utilities tests ##########

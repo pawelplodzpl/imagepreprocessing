@@ -15,6 +15,7 @@ ___
 - **Draws bounding boxes of the images from annotation files for preview.**
 - **Plots training history graph from keras history object. ([example usage](#Create-training-history-graph-for-keras))**
 - **Plots confusion matrix. ([example usage](#Make-prediction-from-test-array-and-create-the-confusion-matrix-with-keras-model))**
+- **([More](#Delete-a-class-and-update-all-yolo-annotation-files-in-a-directory))**
 
 ### This dataset structure is required for most of the operations 
 ```
@@ -39,6 +40,9 @@ pip install imagepreprocessing
 from imagepreprocessing.darknet_functions import create_training_data_yolo
 main_dir = "datasets/food_5class"
 create_training_data_yolo(main_dir)
+
+# other options
+# create_training_data_yolo(main_dir, yolo_version=4, train_machine_path_sep = "/", percent_to_use = 1, validation_split = 0.2, create_cfg_file = True)
 ```
 output
 ```
@@ -66,7 +70,10 @@ Your train command for multi gpu is: ./darknet detector train data/food_5class/o
 from  imagepreprocessing.keras_functions import create_training_data_keras
 source_path = "datasets/my_dataset"
 save_path = "5000images_on_one_file"
-train_x, train_y, valid_x, valid_y = create_training_data_keras(source_path, save_path = save_path, image_size = (299,299), validation_split=0.1, percent_to_use=0.5, grayscale = True)
+train_x, train_y = create_training_data_keras(source_path)
+
+# other options
+# train_x, train_y, valid_x, valid_y = create_training_data_keras(source_path, save_path = save_path, image_size = (299,299), validation_split=0.1, percent_to_use=0.5, grayscale = True)
 ```
 
 
@@ -167,6 +174,21 @@ for index, folder in enumerate(folders):
 
 # creating required files
 create_training_data_yolo(main_dir)
+```
+
+## Delete a class and update all yolo annotation files in a directory
+```python
+# function saves new annotation files on a different directory by default but you can pass the same directory to override old ones
+
+# single directory
+class_path = "datasets/my_dataset/class1"
+remove_index = 2
+remove_class_from_annotation_files(class_path, remove_index, new_annotations_path = "new_annotations")
+
+# for multiple directories
+import os
+for path in os.listdir("datasets/my_dataset"):
+    remove_class_from_annotation_files(path, remove_index, new_annotations_path = path + "_new")
 ```
 
 ## Count class appearances in a directory for annotated yolo data
