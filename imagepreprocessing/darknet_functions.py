@@ -340,11 +340,15 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
             # __coords__.append((x, y))
             __coords__[1:] = [(x, y)]
             __drawing__ = False
-    
-            cv2.rectangle(image, __coords__[0], __coords__[1], (255, 0, 0), 2)
 
-            # add points
-            points.append(((label),__coords__[0],__coords__[1]))
+            # PREVENT POSSIBLE OUT OF IMAGE RECTANGLES 
+            if(__coords__[0][0] and __coords__[1][0] > 0 and __coords__[0][0] and __coords__[1][0] < max_windows_size[0]):
+                if(__coords__[0][1] and __coords__[1][1] > 0 and __coords__[0][1] and __coords__[1][1] < max_windows_size[1]):
+
+                    cv2.rectangle(image, __coords__[0], __coords__[1], (255, 0, 0), 2)
+
+                    # add points
+                    points.append(((label),__coords__[0],__coords__[1]))
 
 
         elif event == cv2.EVENT_RBUTTONDOWN:
@@ -447,9 +451,11 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
 
         if(annoted_object_count == 0):
             __save_annotations_to_file(images[image_index], [], "w")
-        
-        # show some info with puttext
-        cv2.putText(image, "{0}/{1} objects:{2} label: {3}".format(len(images), image_index+1, annoted_object_count, class_names[label]), (0, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color=(0, 200, 100), thickness=2)
+
+        # show some info with puttext and print
+        _, image_name = os.path.split(images[image_index])
+        cv2.putText(image, "{0}/{1} {2} objs:{3} lbl:{4}".format(len(images), image_index+1, image_name, annoted_object_count, class_names[label]), (0, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color=(0, 200, 100), thickness=2)
+        print("{0}/{1} objects: {2} label: {3} image: {4}".format(len(images), image_index+1, annoted_object_count, class_names[label], images[image_index]))
 
         return image 
 
