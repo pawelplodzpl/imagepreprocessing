@@ -69,11 +69,10 @@ Your train command for multi gpu is: ./darknet detector train data/food_5class/o
 ```python
 from  imagepreprocessing.keras_functions import create_training_data_keras
 source_path = "datasets/my_dataset"
-save_path = "5000images_on_one_file"
 train_x, train_y = create_training_data_keras(source_path)
 
 # other options
-# train_x, train_y, valid_x, valid_y = create_training_data_keras(source_path, save_path = save_path, image_size = (299,299), validation_split=0.1, percent_to_use=0.5, grayscale = True)
+# train_x, train_y, valid_x, valid_y = create_training_data_keras(source_path, save_path = "5000images_on_one_file", image_size = (299,299), validation_split=0.1, percent_to_use=0.5, grayscale = True)
 ```
 
 
@@ -206,7 +205,7 @@ output
 
 ## Make multi input model prediction and create the confusion matrix
 ```python
-from imagepreprocessing.keras_functions import create_training_data_kera
+from imagepreprocessing.keras_functions import create_training_data_keras
 from  imagepreprocessing.utilities import create_confusion_matrix, train_test_split
 import numpy as np
 
