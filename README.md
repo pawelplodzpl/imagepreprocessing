@@ -139,8 +139,17 @@ create_confusion_matrix(predictions, test_y, class_names=class_names, one_hot=Tr
 from imagepreprocessing.darknet_functions import yolo_annotation_tool
 yolo_annotation_tool("test_stuff/images", "test_stuff/obj.names")
 ```
-<img src="readme_images/annotation_tool_example.png" alt="drawing" width="300"/>
+Usage
+- "a" go backward
+- "d" go forward
+- "s" save selected annotations
+- "z" delete last annotation
+- "r" remove unsaved annotations
+- "c" clear all annotations including saved ones
+- "h" hide or show labels on the image
 
+<img src="readme_images/annotation_tool_example.png" alt="drawing" width="300"/>
+</br>
 
 ## Predict all images in a directory with yolo model 
 ##### This function uses shell commands to run darknet so you don't need to compile it as .so file but it is also slow because of that.
