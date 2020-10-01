@@ -259,6 +259,7 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
     z delete last annotation
     r remove unsaved annotations
     c clear all saved annotations
+    h hide or show labels on the image
     """
     import cv2 
     import numpy as np
@@ -434,7 +435,9 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
 
             cv2.rectangle(image, (opencv_point[1], opencv_point[2]), (opencv_point[3], opencv_point[4]), (0,200,100), 2)
             cv2.line(image, (opencv_point[1], opencv_point[2]), (opencv_point[3], opencv_point[4]), (255, 0, 0), 1) 
-            cv2.putText(image, "{0}".format(class_names[opencv_point[0]]), (opencv_point[1], opencv_point[2]), cv2.FONT_HERSHEY_SIMPLEX, 1.5, color=(0, 0, 0), thickness=2)
+            
+            if(show_labels):
+                cv2.putText(image, "{0}".format(class_names[opencv_point[0]]), (opencv_point[1], opencv_point[2]), cv2.FONT_HERSHEY_SIMPLEX, 1.5, color=(0, 0, 0), thickness=2)
 
         return image, len(annotations)
 
@@ -469,6 +472,7 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
     __drawing__ = False
     window_name = "Yolo annotation tool"
     image = images[0]
+    show_labels = True
 
     # create window and set it up
     cv2.namedWindow(window_name)
@@ -553,6 +557,15 @@ def yolo_annotation_tool(images_path, class_names_file, max_windows_size=(1200,7
         # clear annotations
         if(key == ord("c")):
             __save_annotations_to_file(images[image_index], [], "w")
+            image = __refresh_image(image_index, label)        
+            points = []
+
+        # hide show labels
+        if(key == ord("h")):
+            if(show_labels):
+                show_labels = False
+            else:
+                show_labels = True
             image = __refresh_image(image_index, label)        
             points = []
 
