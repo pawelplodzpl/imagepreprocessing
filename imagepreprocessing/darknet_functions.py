@@ -13,7 +13,7 @@ from imagepreprocessing.__cfg_templates import __get_cfg_template
 
 # yolo functions
 
-def create_training_data_yolo(source_path, yolo_version=3, isTiny = False, percent_to_use = 1, validation_split = 0.2, create_cfg_file=True, train_machine_path_sep = "/", shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data","yolo-obj.cfg","yolo-custom.cfg"]):
+def create_training_data_yolo(source_path, yolo_version=3, isTiny = True, percent_to_use = 1.0, validation_split = 0.2, create_cfg_file=True, train_machine_path_sep = "/", shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data","yolo-obj.cfg","yolo-custom.cfg"]):
     """
     Creates required training files for yolo 
 
@@ -105,7 +105,7 @@ def create_training_data_yolo(source_path, yolo_version=3, isTiny = False, perce
         images = list(filter(lambda x: ".txt" not in x, images))
 
         # fix possible percentage error
-        if(percent_to_use <= 0 or percent_to_use > 1):
+        if(percent_to_use <= 0 or percent_to_use > 1.0):
             raise ValueError("Percentage should be between 0 and 1")
         elif(int(percent_to_use * len(images)) == 0):
             raise ValueError("Percentage is too small for this set")
@@ -158,7 +158,7 @@ def create_training_data_yolo(source_path, yolo_version=3, isTiny = False, perce
     print()
 
 
-def create_cfg_file_yolo(save_path, classes, yolo_version=3, isTiny=False, batch=64, sub=16, width=416, height=416):
+def create_cfg_file_yolo(save_path, classes, yolo_version=3, isTiny=True, batch=64, sub=16, width=416, height=416):
     """
     creates config file with default options for yolo3
 
@@ -791,7 +791,7 @@ def remove_class_from_annotation_files(class_path, class_index_to_remove, new_an
 
 
 # deprecated
-def __create_training_data_yolo(source_path, save_path = "data/obj/", percent_to_use = 1, validation_split = 0.2, rename_duplicates = False, shuffle = True, files_to_exclude = [".DS_Store","data","train.txt","test.txt","obj.names","obj.data"]):
+def __create_training_data_yolo(source_path, save_path = "data/obj/", percent_to_use = 1.0, validation_split = 0.2, rename_duplicates = False, shuffle = True, files_to_exclude = [".DS_Store","data","train.txt","test.txt","obj.names","obj.data"]):
     """
     Creates train ready data for yolo, labels all the images by center automatically
     (This is not the optimal way of labeling but if you need a lot of data fast this is an option)

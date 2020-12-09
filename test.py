@@ -21,7 +21,7 @@ source_path_darknet = "test_stuff/images"
 
 ########## yolo tests ##########
 
-create_training_data_yolo("test_stuff/test_datasets/food_5class", yolo_version=4, isTiny=True, train_machine_path_sep = "/", percent_to_use = 1 ,validation_split = 0.2, create_cfg_file = True)
+create_training_data_yolo("test_stuff/test_datasets/food_5class", yolo_version=4, isTiny=True, train_machine_path_sep = "/", percent_to_use = 1.0 ,validation_split = 0.2, create_cfg_file = True)
 
 # yolo_annotation_tool("test_stuff/images", "test_stuff/obj.names")
 
