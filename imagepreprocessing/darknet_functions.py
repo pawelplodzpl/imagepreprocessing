@@ -13,7 +13,7 @@ from imagepreprocessing.__cfg_templates import __get_cfg_template
 
 # yolo functions
 
-def create_training_data_yolo(source_path, yolo_version=3, percent_to_use = 1, validation_split = 0.2, create_cfg_file=True, train_machine_path_sep = "/", shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data","yolo-obj.cfg","yolo-custom.cfg"]):
+def create_training_data_yolo(source_path, yolo_version=3, isTiny = False, percent_to_use = 1, validation_split = 0.2, create_cfg_file=True, train_machine_path_sep = "/", shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data","yolo-obj.cfg","yolo-custom.cfg"]):
     """
     Creates required training files for yolo 
 
@@ -67,8 +67,12 @@ def create_training_data_yolo(source_path, yolo_version=3, percent_to_use = 1, v
         train_info = "Download darknet53.conv.74 and move it to darknets root directory.(there are download links on https://github.com/AlexeyAB/darknet)\nAlso move your dataset file to darknet/data/{0}\nRun the command below in the darknets root directory to start training.".format(source_folder)
         train_command1 = "Your train command with map is: ./darknet detector train data/{0}/obj.data data/{0}/yolo-custom.cfg darknet53.conv.74 -map".format(source_folder)
         train_command2 = "Your train command for multi gpu is: ./darknet detector train data/{0}/obj.data data/{0}/yolo-custom.cfg darknet53.conv.74 -gpus 0,1 -map".format(source_folder)
-    elif(yolo_version == 4):
+    elif(yolo_version == 4 and isTiny == False):
         train_info = "Download yolov4.conv.137 and move it to darknets root directory.(there are download links on https://github.com/AlexeyAB/darknet)\nAlso move your dataset file to darknet/data/{0}\nRun the command below in the darknets root directory to start training.".format(source_folder)
+        train_command1 = "Your train command with map is: ./darknet detector train data/{0}/obj.data data/{0}/yolo-custom.cfg yolov4.conv.137 -map".format(source_folder)
+        train_command2 = "Your train command for multi gpu is: ./darknet detector train data/{0}/obj.data data/{0}/yolo-custom.cfg yolov4.conv.137 -gpus 0,1 -map".format(source_folder)
+    elif(yolo_version == 4 and isTiny == True):
+        train_info = "Download yolov4-tiny.conv.29 and move it to darknets root directory.(there are download links on https://github.com/AlexeyAB/darknet)\nAlso move your dataset file to darknet/data/{0}\nRun the command below in the darknets root directory to start training.".format(source_folder)
         train_command1 = "Your train command with map is: ./darknet detector train data/{0}/obj.data data/{0}/yolo-custom.cfg yolov4.conv.137 -map".format(source_folder)
         train_command2 = "Your train command for multi gpu is: ./darknet detector train data/{0}/obj.data data/{0}/yolo-custom.cfg yolov4.conv.137 -gpus 0,1 -map".format(source_folder)
     else:
@@ -145,7 +149,7 @@ def create_training_data_yolo(source_path, yolo_version=3, percent_to_use = 1, v
     print("\n")
 
     if(create_cfg_file):
-        create_cfg_file_yolo(source_path, number_of_categories, yolo_version=yolo_version, batch=64, sub=16, width=416, height=416)
+        create_cfg_file_yolo(source_path, number_of_categories, yolo_version=yolo_version, isTiny=isTiny, batch=64, sub=16, width=416, height=416)
 
     print("file saved -> {0}\nfile saved -> {1}\nfile saved -> {2}\nfile saved -> {3}\n".format("train.txt", "test.txt","obj.names","obj.data"))
     print(train_info)
@@ -154,7 +158,7 @@ def create_training_data_yolo(source_path, yolo_version=3, percent_to_use = 1, v
     print()
 
 
-def create_cfg_file_yolo(save_path, classes, yolo_version=3, batch=64, sub=16, width=416, height=416):
+def create_cfg_file_yolo(save_path, classes, yolo_version=3, isTiny=False, batch=64, sub=16, width=416, height=416):
     """
     creates config file with default options for yolo3
 
@@ -182,8 +186,10 @@ def create_cfg_file_yolo(save_path, classes, yolo_version=3, batch=64, sub=16, w
     # get template
     if(yolo_version == 3):
         yolo_cfg_template = __get_cfg_template("yolov3_cfg_template")
-    elif(yolo_version == 4):
+    elif(yolo_version == 4 and isTiny == False):
         yolo_cfg_template = __get_cfg_template("yolov4_cfg_template")
+    elif(yolo_version == 4 and isTiny == True):
+        yolo_cfg_template = __get_cfg_template("yolov4_tiny_cfg_template")
     else:
         raise ValueError("unsupported yolo version") 
 
