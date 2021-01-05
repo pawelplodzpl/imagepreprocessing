@@ -13,7 +13,7 @@ from imagepreprocessing.__cfg_templates import __get_cfg_template
 
 # yolo functions
 
-def create_training_data_yolo(source_path, yolo_version=3, isTiny = True, percent_to_use = 1.0, validation_split = 0.2, create_cfg_file=True, train_machine_path_sep = "/", shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data","yolo-obj.cfg","yolo-custom.cfg"]):
+def create_training_data_yolo(source_path, yolo_version=3, isTiny = True, percent_to_use = 1.0, validation_split = 0.2, create_cfg_file=True, train_machine_path_sep = "/", shuffle = True, files_to_exclude = [".DS_Store","train.txt","test.txt","obj.names","obj.data","yolo-obj.cfg","yolo-custom.cfg", "sizeDescriptions.csv"]):
     """
     Creates required training files for yolo 
 
@@ -73,8 +73,8 @@ def create_training_data_yolo(source_path, yolo_version=3, isTiny = True, percen
         train_command2 = "Your train command for multi gpu is: ./darknet detector train data/{0}/obj.data data/{0}/yolo-custom.cfg yolov4.conv.137 -gpus 0,1 -map".format(source_folder)
     elif(yolo_version == 4 and isTiny == True):
         train_info = "Download yolov4-tiny.conv.29 and move it to darknets root directory.(there are download links on https://github.com/AlexeyAB/darknet)\nAlso move your dataset file to darknet/data/{0}\nRun the command below in the darknets root directory to start training.".format(source_folder)
-        train_command1 = "Your train command with map is: ./darknet detector train data/{0}/obj.data data/{0}/yolo-custom.cfg yolov4.conv.137 -map".format(source_folder)
-        train_command2 = "Your train command for multi gpu is: ./darknet detector train data/{0}/obj.data data/{0}/yolo-custom.cfg yolov4.conv.137 -gpus 0,1 -map".format(source_folder)
+        train_command1 = "Your train command with map is: ./darknet detector train data/{0}/obj.data data/{0}/yolo-custom.cfg yolov4-tiny.conv.29 -map".format(source_folder)
+        train_command2 = "Your train command for multi gpu is: ./darknet detector train data/{0}/obj.data data/{0}/yolo-custom.cfg yolov4-tiny.conv.29 -gpus 0,1 -map".format(source_folder)
     else:
         raise ValueError("unsupported yolo version")
 
